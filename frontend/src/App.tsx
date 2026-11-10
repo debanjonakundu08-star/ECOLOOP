@@ -23,6 +23,7 @@ import { OrderDetailsPage } from './pages/OrderDetailsPage';
 import { CheckoutPage } from './pages/CheckoutPage';
 import { ImpactDashboardPage } from './pages/ImpactDashboardPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 export const App: React.FC = () => {
   return (
@@ -33,15 +34,15 @@ export const App: React.FC = () => {
             <div className="flex flex-col min-h-screen bg-[#F8FAF9] dark:bg-ecoDark-bg text-slate-800 dark:text-slate-100 transition-colors duration-300">
               <Navbar />
               <main className="flex-1">
-
-              <Routes>
-                {/* Public Routes */}
-                <Route path="/" element={<HomePage />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/signup" element={<SignupPage />} />
-                <Route path="/marketplace" element={<MarketplacePage />} />
-                <Route path="/materials/:id" element={<MaterialDetailPage />} />
-                <Route path="/impact" element={<ImpactDashboardPage />} />
+                <ErrorBoundary>
+                  <Routes>
+                    {/* Public Routes */}
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/signup" element={<SignupPage />} />
+                    <Route path="/marketplace" element={<MarketplacePage />} />
+                    <Route path="/materials/:id" element={<MaterialDetailPage />} />
+                    <Route path="/impact" element={<ImpactDashboardPage />} />
 
                 {/* Protected Routes */}
                 <Route
@@ -120,7 +121,8 @@ export const App: React.FC = () => {
                 {/* Catch-all redirect */}
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
-            </main>
+            </ErrorBoundary>
+          </main>
             <Footer />
             <DemoSwitcher />
           </div>

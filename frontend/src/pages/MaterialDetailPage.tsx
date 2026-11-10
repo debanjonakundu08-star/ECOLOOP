@@ -34,11 +34,14 @@ export const MaterialDetailPage: React.FC = () => {
       setLoading(true);
       try {
         const res = await api.materials.getById(id);
-        setListing(res.listing);
-        setAiMatch(res.aiMatch);
-        setRelated(res.related);
-        if (res.listing.images && res.listing.images.length > 0) {
-          setSelectedImage(res.listing.images[0].url);
+        if (res && res.listing) {
+          setListing(res.listing);
+          setAiMatch(res.aiMatch || null);
+          setRelated(Array.isArray(res.related) ? res.related : []);
+          const firstImg = Array.isArray(res.listing.images) && res.listing.images.length > 0
+            ? res.listing.images[0]?.url
+            : 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=800&q=80';
+          setSelectedImage(firstImg);
         }
       } catch (err) {
         console.error('Failed to load material details:', err);
@@ -221,20 +224,20 @@ export const MaterialDetailPage: React.FC = () => {
                     <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 block">Unit Selling Price</span>
                     <div className="flex items-baseline gap-1 mt-0.5">
                       <span className="text-3xl font-black text-emerald-700 dark:text-emerald-400">
-                        ₹{listing.pricePerUnit.toLocaleString('en-IN')}
+                        ₹{typeof listing.pricePerUnit === 'number' ? listing.pricePerUnit.toLocaleString('en-IN') : (listing.pricePerUnit ?? 0)}
                       </span>
-                      <span className="text-xs font-bold text-slate-600 dark:text-slate-300">/ {listing.unit}</span>
+                      <span className="text-xs font-bold text-slate-600 dark:text-slate-300">/ {listing.unit || 'units'}</span>
                     </div>
                   </div>
 
                   <div className="text-right">
                     <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 block">Available Inventory</span>
                     <div className="text-xl font-black text-slate-900 dark:text-white mt-0.5">
-                      {listing.quantity.toLocaleString('en-IN')}{' '}
-                      <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">{listing.unit}</span>
+                      {typeof listing.quantity === 'number' ? listing.quantity.toLocaleString('en-IN') : (listing.quantity ?? 0)}{' '}
+                      <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">{listing.unit || 'units'}</span>
                     </div>
                     <span className="text-[11px] font-medium text-slate-400">
-                      MOQ: {listing.minOrderQuantity} {listing.unit}
+                      MOQ: {listing.minOrderQuantity ?? 1} {listing.unit || 'units'}
                     </span>
                   </div>
                 </div>

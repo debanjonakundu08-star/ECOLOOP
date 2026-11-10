@@ -12,7 +12,7 @@ export const MatchScoreBadge: React.FC<MatchScoreBadgeProps> = ({ match, compact
 
   if (!match) return null;
 
-  const score = match.matchPercentage;
+  const score = typeof match.matchPercentage === 'number' ? Math.round(match.matchPercentage) : 85;
 
   // Determine badge color gradient based on score
   const getBadgeStyle = () => {
@@ -39,6 +39,8 @@ export const MatchScoreBadge: React.FC<MatchScoreBadgeProps> = ({ match, compact
     );
   }
 
+  const distanceKm = typeof match.distanceKm === 'number' ? match.distanceKm : 12;
+
   return (
     <div className="bg-white dark:bg-ecoDark-card rounded-2xl border border-emerald-100/80 dark:border-emerald-500/20 shadow-card p-5 transition-colors duration-300">
       <div className="flex items-center justify-between">
@@ -54,7 +56,7 @@ export const MatchScoreBadge: React.FC<MatchScoreBadgeProps> = ({ match, compact
               </span>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              {match.distanceKm === 0 ? 'Same city' : `${match.distanceKm} km transit`} • Proximity-weighted
+              {distanceKm === 0 ? 'Same city' : `${distanceKm} km transit`} • Proximity-weighted
             </p>
           </div>
         </div>
@@ -77,7 +79,7 @@ export const MatchScoreBadge: React.FC<MatchScoreBadgeProps> = ({ match, compact
       </div>
 
       {/* Matching reasons pill row */}
-      {match.reasons && match.reasons.length > 0 && (
+      {Array.isArray(match.reasons) && match.reasons.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-1.5">
           {match.reasons.slice(0, 3).map((reason, idx) => (
             <span

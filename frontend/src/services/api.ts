@@ -363,8 +363,13 @@ export const api = {
         });
         const query = searchParams.toString() ? `?${searchParams.toString()}` : '';
         const res = await fetchJson<{ listings: MaterialListing[]; total: number }>(`/materials${query}`);
-        if (res && Array.isArray(res.listings) && res.listings.length > 0) {
-          return res;
+        if (res && Array.isArray(res.listings)) {
+          if (res.listings.length === 0 && (params.search || params.category || params.city || params.condition || params.minPrice || params.maxPrice)) {
+            return res;
+          }
+          if (res.listings.length > 0) {
+            return res;
+          }
         }
         const fallbackListings = getLocalListings();
         return { listings: fallbackListings, total: fallbackListings.length };

@@ -57,12 +57,13 @@ export const MarketplacePage: React.FC = () => {
     setLoading(true);
     try {
       const params: Record<string, any> = {
-        sort,
+        sort: sort || 'newest',
       };
-      if (search.trim()) params.search = search.trim();
-      if (category !== 'All') params.category = category;
-      if (city !== 'All') params.city = city;
-      if (condition !== 'All') params.condition = condition;
+      const cleanSearch = (search || '').trim();
+      if (cleanSearch) params.search = cleanSearch;
+      if (category && category !== 'All') params.category = category;
+      if (city && city !== 'All') params.city = city;
+      if (condition && condition !== 'All') params.condition = condition;
       if (minPrice) params.minPrice = minPrice;
       if (maxPrice) params.maxPrice = maxPrice;
 
@@ -79,6 +80,24 @@ export const MarketplacePage: React.FC = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const s = searchParams.get('search') || '';
+    const cat = searchParams.get('category') || 'All';
+    const c = searchParams.get('city') || 'All';
+    const cond = searchParams.get('condition') || 'All';
+    const minP = searchParams.get('minPrice') || '';
+    const maxP = searchParams.get('maxPrice') || '';
+    const srt = searchParams.get('sort') || (user ? 'match' : 'newest');
+
+    setSearch(s);
+    setCategory(cat);
+    setCity(c);
+    setCondition(cond);
+    setMinPrice(minP);
+    setMaxPrice(maxP);
+    setSort(srt);
+  }, [searchParams, user]);
 
   useEffect(() => {
     fetchListings();
@@ -105,7 +124,7 @@ export const MarketplacePage: React.FC = () => {
   };
 
   const hasActiveFilters =
-    search.trim() !== '' ||
+    (search || '').trim() !== '' ||
     category !== 'All' ||
     city !== 'All' ||
     condition !== 'All' ||
@@ -321,8 +340,8 @@ export const MarketplacePage: React.FC = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {(listings || []).map((listing) => (
-                  <MarketplaceCard key={listing.id} listing={listing} />
+                {(listings || []).filter(Boolean).map((listing, idx) => (
+                  <MarketplaceCard key={listing.id || idx} listing={listing} />
                 ))}
               </div>
             )}

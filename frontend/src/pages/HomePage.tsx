@@ -30,8 +30,9 @@ export const HomePage: React.FC = () => {
           api.materials.getAll({ limit: 4 }),
           api.impact.getSummary(),
         ]);
-        setFeaturedListings(matRes.listings.slice(0, 4));
-        setImpactData(impRes);
+        const listings = matRes && Array.isArray(matRes.listings) ? matRes.listings.slice(0, 4) : [];
+        setFeaturedListings(listings);
+        if (impRes) setImpactData(impRes);
       } catch (err) {
         console.error('Error loading homepage data:', err);
       } finally {
@@ -281,8 +282,8 @@ export const HomePage: React.FC = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {featuredListings.map((item) => (
-                <MarketplaceCard key={item.id} listing={item} />
+              {(featuredListings || []).filter(Boolean).map((item, idx) => (
+                <MarketplaceCard key={item.id || idx} listing={item} />
               ))}
             </div>
           )}
