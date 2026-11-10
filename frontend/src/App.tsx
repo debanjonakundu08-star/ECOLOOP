@@ -6,7 +6,6 @@ import { ToastProvider } from './context/ToastContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { ProtectedRoute } from './components/ProtectedRoute';
-import { DemoSwitcher } from './components/DemoSwitcher';
 
 import { HomePage } from './pages/HomePage';
 import { LoginPage } from './pages/LoginPage';
@@ -123,8 +122,7 @@ export const App: React.FC = () => {
               </Routes>
             </ErrorBoundary>
           </main>
-            <Footer />
-            <DemoSwitcher />
+          <Footer />
           </div>
         </BrowserRouter>
       </ToastProvider>
