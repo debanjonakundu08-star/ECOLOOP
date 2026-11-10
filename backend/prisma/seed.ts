@@ -181,7 +181,7 @@ async function main() {
       locationAddress: 'Sector V Warehouse, Salt Lake, Kolkata',
       availability: 'Immediate',
       minOrderQuantity: 250,
-      imageUrl: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=800&q=80',
+      imageUrl: 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80',
     },
     {
       sellerId: buyerUser.id,
@@ -196,7 +196,7 @@ async function main() {
       locationAddress: 'Dona Paula Industrial Estate, Howrah',
       availability: 'Immediate',
       minOrderQuantity: 500,
-      imageUrl: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=800&q=80',
+      imageUrl: 'https://images.unsplash.com/photo-1595278069441-2cf29f8005a4?auto=format&fit=crop&w=800&q=80',
     },
     {
       sellerId: sellerUser.id,

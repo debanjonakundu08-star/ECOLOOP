@@ -31,7 +31,7 @@ export const ListWastePage: React.FC = () => {
     locationAddress: user?.address || 'Industrial Area Phase 2',
     availability: 'Immediate',
     minOrderQuantity: '100',
-    imageUrl: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=800&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80',
   });
 
   const [error, setError] = useState('');
@@ -59,8 +59,8 @@ export const ListWastePage: React.FC = () => {
 
   // Sample photo presets per category for fast realistic listing
   const categoryPhotoPresets: Record<string, string> = {
-    'Paper/Cardboard': 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=800&q=80',
-    'Plastic': 'https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=800&q=80',
+    'Paper/Cardboard': 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80',
+    'Plastic': 'https://images.unsplash.com/photo-1595278069441-2cf29f8005a4?auto=format&fit=crop&w=800&q=80',
     'Metal': 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=800&q=80',
     'Glass': 'https://images.unsplash.com/photo-1589365278144-c9e705f843ba?auto=format&fit=crop&w=800&q=80',
     'Wood': 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=800&q=80',
@@ -123,7 +123,7 @@ export const ListWastePage: React.FC = () => {
         locationAddress: 'Sector V Salt Lake, Kolkata',
         availability: 'Immediate',
         minOrderQuantity: '250',
-        imageUrl: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=800&q=80',
+        imageUrl: 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80',
       },
       {
         category: 'Plastic',
@@ -137,7 +137,7 @@ export const ListWastePage: React.FC = () => {
         locationAddress: 'Jalan Industrial Estate, Howrah',
         availability: 'Immediate',
         minOrderQuantity: '500',
-        imageUrl: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=800&q=80',
+        imageUrl: 'https://images.unsplash.com/photo-1595278069441-2cf29f8005a4?auto=format&fit=crop&w=800&q=80',
       },
       {
         category: 'Wood',

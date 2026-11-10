@@ -76,7 +76,7 @@ function getMockFallback<T>(url: string, options: RequestInit = {}): T | null {
         {
           id: 'img-' + Date.now(),
           listingId: 'custom-' + Date.now(),
-          url: body.imageUrl || body.images?.[0] || 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=800&q=80',
+          url: body.imageUrl || body.images?.[0] || 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80',
           isPrimary: true,
         }
       ]
