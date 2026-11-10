@@ -76,7 +76,7 @@ export const OrderDetailsPage: React.FC = () => {
   const isBuyer = user?.id === order.buyerId;
   const isSeller = user?.id === order.sellerId;
 
-  const steps = ['PROCESSING', 'DISPATCHED', 'IN_TRANSIT', 'DELIVERED'];
+  const steps = ['PROCESSING', 'DISPATCHED', 'IN TRANSIT', 'DELIVERED'];
   const currentStepIdx = steps.indexOf(order.deliveryStatus);
 
   return (
@@ -177,14 +177,14 @@ export const OrderDetailsPage: React.FC = () => {
                   )}
                   {order.deliveryStatus === 'DISPATCHED' && (
                     <button
-                      onClick={() => handleUpdateDeliveryStatus('IN_TRANSIT')}
+                      onClick={() => handleUpdateDeliveryStatus('IN TRANSIT')}
                       disabled={updating}
                       className="px-3.5 py-1.5 rounded-lg font-bold bg-emerald-700 dark:bg-emerald-600 text-white hover:bg-emerald-800 dark:hover:bg-emerald-500 cursor-pointer"
                     >
                       Mark In Transit
                     </button>
                   )}
-                  {order.deliveryStatus === 'IN_TRANSIT' && (
+                  {order.deliveryStatus === 'IN TRANSIT' && (
                     <button
                       onClick={() => handleUpdateDeliveryStatus('DELIVERED')}
                       disabled={updating}
