@@ -137,7 +137,7 @@ export const ListWastePage: React.FC = () => {
         locationAddress: 'Jalan Industrial Estate, Howrah',
         availability: 'Immediate',
         minOrderQuantity: '500',
-        imageUrl: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=800&q=80',
+        imageUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRKmCDH7D2D8bFnO38_WxnlTwBJjGABM0KLRB5qQCpYUu5rPMwT54zjZqm1&s=10',
       },
       {
         category: 'Wood',
