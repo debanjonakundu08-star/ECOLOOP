@@ -458,48 +458,53 @@ export const ListWastePage: React.FC = () => {
               </div>
             </div>
 
-            {/* Photograph: Upload JPG, URL, or Preset */}
+            {/* Photograph: Upload JPG from Device, URL, or Preset */}
             <div className="space-y-3">
               <div className="flex items-center justify-between flex-wrap gap-2">
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Material Photograph *
-                </label>
-                <div className="flex bg-slate-100 dark:bg-emerald-950/60 p-0.5 rounded-lg border border-slate-200 dark:border-emerald-900/60 text-xs">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                    Material Photograph *
+                  </label>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Upload your own photo from your phone/computer, or use a web link
+                  </p>
+                </div>
+                <div className="flex bg-slate-100 dark:bg-emerald-950/60 p-0.5 rounded-xl border border-slate-200 dark:border-emerald-900/60 text-xs">
                   <button
                     type="button"
                     onClick={() => setImageMode('upload')}
-                    className={`flex items-center gap-1.5 px-3 py-1 rounded-md font-semibold transition-all ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-xs transition-all ${
                       imageMode === 'upload'
-                        ? 'bg-white dark:bg-emerald-600 text-slate-900 dark:text-white shadow-sm'
-                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                        ? 'bg-emerald-600 text-white shadow-sm'
+                        : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
                     }`}
                   >
-                    <Upload className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-300" />
-                    <span>Upload JPG / Image</span>
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Upload from Device (.jpg, .png)</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setImageMode('url')}
-                    className={`flex items-center gap-1.5 px-3 py-1 rounded-md font-semibold transition-all ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold text-xs transition-all ${
                       imageMode === 'url'
-                        ? 'bg-white dark:bg-emerald-600 text-slate-900 dark:text-white shadow-sm'
-                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                        ? 'bg-emerald-600 text-white shadow-sm'
+                        : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
                     }`}
                   >
                     <Link2 className="w-3.5 h-3.5" />
-                    <span>Image URL</span>
+                    <span>Web URL</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setImageMode('preset')}
-                    className={`flex items-center gap-1.5 px-3 py-1 rounded-md font-semibold transition-all ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold text-xs transition-all ${
                       imageMode === 'preset'
-                        ? 'bg-white dark:bg-emerald-600 text-slate-900 dark:text-white shadow-sm'
-                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                        ? 'bg-emerald-600 text-white shadow-sm'
+                        : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
                     }`}
                   >
-                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                    <span>Presets</span>
+                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Preset</span>
                   </button>
                 </div>
               </div>
@@ -525,7 +530,7 @@ export const ListWastePage: React.FC = () => {
                     className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all ${
                       isDragging
                         ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/40 scale-[1.01]'
-                        : 'border-slate-200 dark:border-emerald-900/60 hover:border-emerald-400 dark:hover:border-emerald-500/60 bg-slate-50/50 dark:bg-ecoDark-card/50'
+                        : 'border-emerald-500/50 dark:border-emerald-500/40 hover:border-emerald-600 bg-emerald-50/20 dark:bg-emerald-950/20'
                     }`}
                   >
                     {uploadFileName ? (
@@ -534,18 +539,18 @@ export const ListWastePage: React.FC = () => {
                           <img
                             src={formData.imageUrl}
                             alt="Uploaded preview"
-                            className="w-16 h-16 rounded-xl object-cover border border-emerald-500/40 shadow-sm shrink-0"
+                            className="w-20 h-20 rounded-xl object-cover border-2 border-emerald-500 shadow-md shrink-0"
                           />
                           <div>
-                            <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-bold text-xs">
-                              <CheckCircle2 className="w-3.5 h-3.5" />
-                              <span>Image Attached Successfully</span>
+                            <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-bold text-sm">
+                              <CheckCircle2 className="w-4 h-4" />
+                              <span>Your Photo is Attached Successfully</span>
                             </div>
-                            <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate max-w-xs mt-0.5">
+                            <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate max-w-sm mt-0.5">
                               {uploadFileName}
                             </p>
-                            <p className="text-[11px] text-slate-400 dark:text-slate-500">
-                              {uploadFileSize} • Compressed for fast load
+                            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                              {uploadFileSize} • Compressed for fast marketplace viewing
                             </p>
                           </div>
                         </div>
@@ -556,9 +561,9 @@ export const ListWastePage: React.FC = () => {
                               e.stopPropagation();
                               fileInputRef.current?.click();
                             }}
-                            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/80 transition-colors"
+                            className="px-4 py-2 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition-colors"
                           >
-                            Replace
+                            Replace Photo
                           </button>
                           <button
                             type="button"
@@ -571,7 +576,7 @@ export const ListWastePage: React.FC = () => {
                                 imageUrl: categoryPhotoPresets[formData.category] || categoryPhotoPresets['Paper/Cardboard'],
                               }));
                             }}
-                            className="p-1.5 text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                            className="p-2 text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                             title="Reset to category preset"
                           >
                             <X className="w-4 h-4" />
@@ -579,20 +584,23 @@ export const ListWastePage: React.FC = () => {
                         </div>
                       </div>
                     ) : (
-                      <div className="flex flex-col items-center justify-center py-2">
-                        <div className="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-3">
-                          <Upload className="w-6 h-6" />
+                      <div className="flex flex-col items-center justify-center py-4">
+                        <div className="w-14 h-14 rounded-2xl bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-3 shadow-inner">
+                          <Upload className="w-7 h-7" />
                         </div>
-                        <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
-                          Click to upload or drag & drop JPG / PNG photo
+                        <p className="text-base font-extrabold text-slate-800 dark:text-slate-100">
+                          Upload Photo of Your Waste Material
                         </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                          Select a photo of your waste material from your computer or phone (JPG, PNG, WEBP)
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-md">
+                          Click below or drag & drop a JPG, JPEG, or PNG image taken from your phone or computer.
                         </p>
-                        <div className="mt-3 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-emerald-600 text-white font-semibold text-xs shadow-sm hover:bg-emerald-500 transition-colors">
-                          <FileImage className="w-3.5 h-3.5" />
-                          <span>Select Photo File</span>
+                        <div className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-md transition-all active:scale-95">
+                          <FileImage className="w-4 h-4" />
+                          <span>Select JPG / Photo from Device</span>
                         </div>
+                        <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-2">
+                          Supports .jpg, .jpeg, .png, .webp (automatically compressed for fast loading)
+                        </p>
                       </div>
                     )}
                   </div>
@@ -601,7 +609,7 @@ export const ListWastePage: React.FC = () => {
 
               {/* URL Mode */}
               {imageMode === 'url' && (
-                <div>
+                <div className="space-y-2">
                   <div className="flex gap-3 items-center">
                     <input
                       type="url"
@@ -621,15 +629,24 @@ export const ListWastePage: React.FC = () => {
                       }}
                     />
                   </div>
-                  <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
-                    Paste any direct high-resolution image URL showing your industrial waste material.
-                  </p>
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="text-slate-400 dark:text-slate-500">
+                      Paste any direct high-resolution image link.
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setImageMode('upload')}
+                      className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline"
+                    >
+                      ← Rather upload a photo file from your device?
+                    </button>
+                  </div>
                 </div>
               )}
 
               {/* Presets Mode */}
               {imageMode === 'preset' && (
-                <div className="bg-slate-50 dark:bg-ecoDark-card/50 p-3.5 rounded-xl border border-slate-200 dark:border-emerald-900/60">
+                <div className="bg-slate-50 dark:bg-ecoDark-card/50 p-4 rounded-xl border border-slate-200 dark:border-emerald-900/60">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
                       Standard Verified Photo for {formData.category}
@@ -654,13 +671,17 @@ export const ListWastePage: React.FC = () => {
                       alt={formData.category}
                       className="w-16 h-16 rounded-xl object-cover border border-emerald-500/50 shadow-sm"
                     />
-                    <div className="text-xs text-slate-600 dark:text-slate-400">
+                    <div className="text-xs text-slate-600 dark:text-slate-400 flex-1">
                       <p className="font-medium text-slate-800 dark:text-slate-200">
                         High-quality realistic photo representing {formData.category}
                       </p>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                        Guarantees clear, high-resolution rendering across marketplace search and buyers' feeds.
-                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setImageMode('upload')}
+                        className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold hover:underline mt-1 block"
+                      >
+                        ← Upload your own real photo from device instead
+                      </button>
                     </div>
                   </div>
                 </div>
