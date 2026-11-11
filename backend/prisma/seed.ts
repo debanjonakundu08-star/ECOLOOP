@@ -286,7 +286,7 @@ async function main() {
       locationAddress: 'Jalan Industrial Estate, NH6, Howrah',
       availability: 'Immediate',
       minOrderQuantity: 500,
-      imageUrl: 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=800&q=80',
+      imageUrl: 'https://images.unsplash.com/photo-1565793298595-6a879b1d9492?auto=format&fit=crop&w=800&q=80',
     },
     {
       sellerId: sellerUser.id,

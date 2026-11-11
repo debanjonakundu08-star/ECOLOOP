@@ -5,6 +5,7 @@ import { api } from '../services/api';
 import { MaterialListing, MatchResult } from '../types';
 import { MatchScoreBadge } from '../components/MatchScoreBadge';
 import { MarketplaceCard } from '../components/MarketplaceCard';
+import { EditListingModal } from '../components/EditListingModal';
 import { useAuth } from '../context/AuthContext';
 import {
   MapPin,
@@ -14,6 +15,8 @@ import {
   Calendar,
   Sparkles,
   ArrowLeft,
+  Camera,
+  Edit3,
 } from 'lucide-react';
 
 export const MaterialDetailPage: React.FC = () => {
@@ -27,6 +30,7 @@ export const MaterialDetailPage: React.FC = () => {
   const [selectedImage, setSelectedImage] = useState<string>('');
   const [isSaved, setIsSaved] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isEditOpen, setIsEditOpen] = useState(false);
 
   useEffect(() => {
     async function loadDetails() {
@@ -38,9 +42,16 @@ export const MaterialDetailPage: React.FC = () => {
           setListing(res.listing);
           setAiMatch(res.aiMatch || null);
           setRelated(Array.isArray(res.related) ? res.related : []);
-          const firstImg = Array.isArray(res.listing.images) && res.listing.images.length > 0
+          const isMetal = res.listing.category === 'Metal' || res.listing.title?.toLowerCase().includes('steel');
+          const defaultFallback = isMetal
+            ? 'https://images.unsplash.com/photo-1565793298595-6a879b1d9492?auto=format&fit=crop&w=800&q=80'
+            : 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80';
+          let firstImg = Array.isArray(res.listing.images) && res.listing.images.length > 0
             ? res.listing.images[0]?.url
-            : 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=800&q=80';
+            : defaultFallback;
+          if (!firstImg || firstImg.includes('1504917599217')) {
+            firstImg = defaultFallback;
+          }
           setSelectedImage(firstImg);
         }
       } catch (err) {
@@ -105,10 +116,20 @@ export const MaterialDetailPage: React.FC = () => {
             <ArrowLeft className="w-4 h-4" />
             <span>Back</span>
           </button>
-          <div className="flex items-center gap-2">
-            <Link to="/marketplace" className="hover:text-slate-800 dark:hover:text-white">Marketplace</Link>
-            <span>/</span>
-            <span className="text-emerald-600 dark:text-emerald-400 font-bold">{listing.category}</span>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsEditOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-ecoDark-card border border-emerald-500/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 shadow-sm transition-all"
+              title="Edit company name or change photo"
+            >
+              <Camera className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span>Edit Listing / Upload Photo</span>
+            </button>
+            <div className="flex items-center gap-2">
+              <Link to="/marketplace" className="hover:text-slate-800 dark:hover:text-white">Marketplace</Link>
+              <span>/</span>
+              <span className="text-emerald-600 dark:text-emerald-400 font-bold">{listing.category}</span>
+            </div>
           </div>
         </div>
 
@@ -123,9 +144,14 @@ export const MaterialDetailPage: React.FC = () => {
             <div className="lg:col-span-5 space-y-4">
               <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-slate-100 dark:bg-ecoDark-card border border-slate-200/80 dark:border-emerald-500/20 shadow-inner">
                 <img
-                  src={selectedImage || 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=800&q=80'}
+                  src={selectedImage || (listing.category === 'Metal' || listing.title?.toLowerCase().includes('steel') ? 'https://images.unsplash.com/photo-1565793298595-6a879b1d9492?auto=format&fit=crop&w=800&q=80' : 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80')}
                   alt={listing.title}
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = listing.category === 'Metal' || listing.title?.toLowerCase().includes('steel')
+                      ? 'https://images.unsplash.com/photo-1565793298595-6a879b1d9492?auto=format&fit=crop&w=800&q=80'
+                      : 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80';
+                  }}
                 />
                 <div className="absolute top-3 left-3">
                   <span className="px-3 py-1 rounded-full text-xs font-bold bg-white/95 dark:bg-ecoDark-surface text-emerald-900 dark:text-emerald-300 shadow-sm backdrop-blur-sm border border-emerald-100 dark:border-emerald-500/30">
@@ -296,6 +322,16 @@ export const MaterialDetailPage: React.FC = () => {
                     >
                       Inquire with Seller
                     </Link>
+
+                    <button
+                      type="button"
+                      onClick={() => setIsEditOpen(true)}
+                      className="w-full sm:w-auto px-5 py-4 rounded-xl text-center font-bold text-sm bg-slate-100 dark:bg-ecoDark-card hover:bg-slate-200 dark:hover:bg-ecoDark-hover text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-emerald-900/60 transition-colors flex items-center justify-center gap-2"
+                      title="Edit company name or change photo"
+                    >
+                      <Camera className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                      <span>Edit Listing / Upload Photo</span>
+                    </button>
                   </>
                 )}
               </div>
@@ -330,6 +366,22 @@ export const MaterialDetailPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {listing && (
+        <EditListingModal
+          listing={listing}
+          isOpen={isEditOpen}
+          onClose={() => setIsEditOpen(false)}
+          onSave={(updated) => {
+            setListing(updated);
+            const firstImg =
+              (Array.isArray(updated.images) && updated.images[0]?.url) ||
+              (updated as any).imageUrl ||
+              selectedImage;
+            setSelectedImage(firstImg);
+          }}
+        />
+      )}
     </div>
   );
 };

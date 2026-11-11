@@ -134,9 +134,14 @@ export const RequestMaterialPage: React.FC = () => {
           {/* Material summary box */}
           <div className="p-4 rounded-2xl bg-slate-50 dark:bg-ecoDark-card border border-slate-200/80 dark:border-emerald-950/60 flex items-center gap-4 mb-6">
             <img
-              src={listing.images[0]?.url || 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=800&q=80'}
+              src={listing.images[0]?.url || (listing.category === 'Metal' || listing.title?.toLowerCase().includes('steel') ? 'https://images.unsplash.com/photo-1565793298595-6a879b1d9492?auto=format&fit=crop&w=800&q=80' : 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80')}
               alt={listing.title}
               className="w-16 h-16 rounded-xl object-cover shrink-0"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = listing.category === 'Metal' || listing.title?.toLowerCase().includes('steel')
+                  ? 'https://images.unsplash.com/photo-1565793298595-6a879b1d9492?auto=format&fit=crop&w=800&q=80'
+                  : 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80';
+              }}
             />
             <div className="flex-1 min-w-0">
               <h4 className="font-bold text-sm text-slate-900 dark:text-white truncate">{listing.title}</h4>

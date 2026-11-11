@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -13,6 +13,11 @@ import {
   Calendar,
   CheckCircle2,
   Image as ImageIcon,
+  Link2,
+  FileImage,
+  Sparkles,
+  X,
+  RefreshCw,
 } from 'lucide-react';
 
 export const ListWastePage: React.FC = () => {
@@ -20,6 +25,7 @@ export const ListWastePage: React.FC = () => {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
+    companyName: user?.businessName || '',
     category: 'Paper/Cardboard',
     title: '',
     description: '',
@@ -36,6 +42,64 @@ export const ListWastePage: React.FC = () => {
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [imageMode, setImageMode] = useState<'upload' | 'url' | 'preset'>('upload');
+  const [uploadFileName, setUploadFileName] = useState<string>('');
+  const [uploadFileSize, setUploadFileSize] = useState<string>('');
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const processImageFile = (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      setError('Please select a valid image file (.jpg, .jpeg, .png, .webp)');
+      return;
+    }
+    setError('');
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxDim = 1200;
+        let width = img.width;
+        let height = img.height;
+        if (width > height && width > maxDim) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        } else if (height > maxDim) {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          setFormData((prev) => ({ ...prev, imageUrl: dataUrl }));
+          setUploadFileName(file.name);
+          setUploadFileSize((file.size / 1024).toFixed(1) + ' KB');
+        }
+      };
+      img.src = e.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      processImageFile(file);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      processImageFile(file);
+    }
+  };
 
   const categories = [
     'Paper/Cardboard',
@@ -61,7 +125,7 @@ export const ListWastePage: React.FC = () => {
   const categoryPhotoPresets: Record<string, string> = {
     'Paper/Cardboard': 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80',
     'Plastic': 'https://images.unsplash.com/photo-1595278069441-2cf29f8005a4?auto=format&fit=crop&w=800&q=80',
-    'Metal': 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=800&q=80',
+    'Metal': 'https://images.unsplash.com/photo-1565793298595-6a879b1d9492?auto=format&fit=crop&w=800&q=80',
     'Glass': 'https://images.unsplash.com/photo-1589365278144-c9e705f843ba?auto=format&fit=crop&w=800&q=80',
     'Wood': 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=800&q=80',
     'Textile': 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=800&q=80',
@@ -90,6 +154,11 @@ export const ListWastePage: React.FC = () => {
     e.preventDefault();
     setError('');
 
+    if (!formData.companyName.trim()) {
+      setError('Please provide your company or business name.');
+      return;
+    }
+
     if (!formData.title.trim() || !formData.description.trim() || !formData.quantity || !formData.pricePerUnit) {
       setError('Please provide all required material specifications.');
       return;
@@ -99,6 +168,7 @@ export const ListWastePage: React.FC = () => {
     try {
       const res = await api.materials.create({
         ...formData,
+        companyName: formData.companyName.trim(),
         images: [formData.imageUrl],
       });
       navigate(`/materials/${res.listing.id}`);
@@ -156,7 +226,10 @@ export const ListWastePage: React.FC = () => {
     ];
 
     const pick = samples[Math.floor(Math.random() * samples.length)];
-    setFormData(pick);
+    setFormData((prev) => ({
+      ...prev,
+      ...pick,
+    }));
     setError('');
   };
 
@@ -197,6 +270,26 @@ export const ListWastePage: React.FC = () => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Company / Business Name */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center justify-between">
+                <span>Your Company / Enterprise Name *</span>
+                <span className="text-[11px] font-normal text-emerald-700 dark:text-emerald-400">Decide your exact business/plant name</span>
+              </label>
+              <input
+                type="text"
+                name="companyName"
+                required
+                placeholder="e.g. Tata Steel Scrap Division, Bengal Recyclers, etc."
+                value={formData.companyName}
+                onChange={handleChange}
+                className="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-emerald-900/60 focus:border-emerald-500 focus:outline-none bg-white dark:bg-ecoDark-card text-slate-900 dark:text-white font-medium"
+              />
+              <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
+                This exact name will be shown to buyers across the marketplace as the supplier enterprise.
+              </p>
+            </div>
+
             {/* Category & Title */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="sm:col-span-1">
@@ -365,30 +458,213 @@ export const ListWastePage: React.FC = () => {
               </div>
             </div>
 
-            {/* Photograph URL / Preset */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                Material Photograph URL (High-Res Image) *
-              </label>
-              <div className="flex gap-3 items-center">
-                <input
-                  type="url"
-                  name="imageUrl"
-                  required
-                  value={formData.imageUrl}
-                  onChange={handleChange}
-                  placeholder="https://..."
-                  className="flex-1 px-4 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-emerald-900/60 focus:border-emerald-500 focus:outline-none bg-white dark:bg-ecoDark-card text-slate-900 dark:text-white"
-                />
-                <img
-                  src={formData.imageUrl}
-                  alt="Preview"
-                  className="w-12 h-12 rounded-xl object-cover border border-slate-200 dark:border-emerald-900/60 shrink-0"
-                />
+            {/* Photograph: Upload JPG, URL, or Preset */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Material Photograph *
+                </label>
+                <div className="flex bg-slate-100 dark:bg-emerald-950/60 p-0.5 rounded-lg border border-slate-200 dark:border-emerald-900/60 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setImageMode('upload')}
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-md font-semibold transition-all ${
+                      imageMode === 'upload'
+                        ? 'bg-white dark:bg-emerald-600 text-slate-900 dark:text-white shadow-sm'
+                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                    }`}
+                  >
+                    <Upload className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-300" />
+                    <span>Upload JPG / Image</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setImageMode('url')}
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-md font-semibold transition-all ${
+                      imageMode === 'url'
+                        ? 'bg-white dark:bg-emerald-600 text-slate-900 dark:text-white shadow-sm'
+                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                    }`}
+                  >
+                    <Link2 className="w-3.5 h-3.5" />
+                    <span>Image URL</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setImageMode('preset')}
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-md font-semibold transition-all ${
+                      imageMode === 'preset'
+                        ? 'bg-white dark:bg-emerald-600 text-slate-900 dark:text-white shadow-sm'
+                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                    }`}
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                    <span>Presets</span>
+                  </button>
+                </div>
               </div>
-              <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
-                A verified industrial preset image is automatically attached for {formData.category}. You can replace it with any image URL.
-              </p>
+
+              {/* Upload JPG / Image Mode */}
+              {imageMode === 'upload' && (
+                <div>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    accept="image/jpeg,image/png,image/webp,image/jpg"
+                    className="hidden"
+                  />
+                  <div
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setIsDragging(true);
+                    }}
+                    onDragLeave={() => setIsDragging(false)}
+                    onDrop={handleDrop}
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all ${
+                      isDragging
+                        ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/40 scale-[1.01]'
+                        : 'border-slate-200 dark:border-emerald-900/60 hover:border-emerald-400 dark:hover:border-emerald-500/60 bg-slate-50/50 dark:bg-ecoDark-card/50'
+                    }`}
+                  >
+                    {uploadFileName ? (
+                      <div className="flex items-center justify-between gap-4 text-left">
+                        <div className="flex items-center gap-4">
+                          <img
+                            src={formData.imageUrl}
+                            alt="Uploaded preview"
+                            className="w-16 h-16 rounded-xl object-cover border border-emerald-500/40 shadow-sm shrink-0"
+                          />
+                          <div>
+                            <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-bold text-xs">
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span>Image Attached Successfully</span>
+                            </div>
+                            <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate max-w-xs mt-0.5">
+                              {uploadFileName}
+                            </p>
+                            <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                              {uploadFileSize} • Compressed for fast load
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              fileInputRef.current?.click();
+                            }}
+                            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/80 transition-colors"
+                          >
+                            Replace
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setUploadFileName('');
+                              setUploadFileSize('');
+                              setFormData((prev) => ({
+                                ...prev,
+                                imageUrl: categoryPhotoPresets[formData.category] || categoryPhotoPresets['Paper/Cardboard'],
+                              }));
+                            }}
+                            className="p-1.5 text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                            title="Reset to category preset"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-2">
+                        <div className="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-3">
+                          <Upload className="w-6 h-6" />
+                        </div>
+                        <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                          Click to upload or drag & drop JPG / PNG photo
+                        </p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          Select a photo of your waste material from your computer or phone (JPG, PNG, WEBP)
+                        </p>
+                        <div className="mt-3 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-emerald-600 text-white font-semibold text-xs shadow-sm hover:bg-emerald-500 transition-colors">
+                          <FileImage className="w-3.5 h-3.5" />
+                          <span>Select Photo File</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* URL Mode */}
+              {imageMode === 'url' && (
+                <div>
+                  <div className="flex gap-3 items-center">
+                    <input
+                      type="url"
+                      name="imageUrl"
+                      required
+                      value={formData.imageUrl}
+                      onChange={handleChange}
+                      placeholder="https://images.unsplash.com/... or any online image URL"
+                      className="flex-1 px-4 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-emerald-900/60 focus:border-emerald-500 focus:outline-none bg-white dark:bg-ecoDark-card text-slate-900 dark:text-white"
+                    />
+                    <img
+                      src={formData.imageUrl}
+                      alt="Preview"
+                      className="w-12 h-12 rounded-xl object-cover border border-slate-200 dark:border-emerald-900/60 shrink-0"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = categoryPhotoPresets[formData.category] || categoryPhotoPresets['Paper/Cardboard'];
+                      }}
+                    />
+                  </div>
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
+                    Paste any direct high-resolution image URL showing your industrial waste material.
+                  </p>
+                </div>
+              )}
+
+              {/* Presets Mode */}
+              {imageMode === 'preset' && (
+                <div className="bg-slate-50 dark:bg-ecoDark-card/50 p-3.5 rounded-xl border border-slate-200 dark:border-emerald-900/60">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                      Standard Verified Photo for {formData.category}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          imageUrl: categoryPhotoPresets[formData.category] || categoryPhotoPresets['Paper/Cardboard'],
+                        }));
+                      }}
+                      className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1"
+                    >
+                      <RefreshCw className="w-3 h-3" />
+                      Apply default preset
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={categoryPhotoPresets[formData.category] || categoryPhotoPresets['Paper/Cardboard']}
+                      alt={formData.category}
+                      className="w-16 h-16 rounded-xl object-cover border border-emerald-500/50 shadow-sm"
+                    />
+                    <div className="text-xs text-slate-600 dark:text-slate-400">
+                      <p className="font-medium text-slate-800 dark:text-slate-200">
+                        High-quality realistic photo representing {formData.category}
+                      </p>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                        Guarantees clear, high-resolution rendering across marketplace search and buyers' feeds.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Submit Button */}

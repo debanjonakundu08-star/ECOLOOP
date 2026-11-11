@@ -15,16 +15,36 @@ import { MOCK_LISTINGS, MOCK_USERS, MOCK_IMPACT, MOCK_MATCH } from './mockData';
 
 const BASE_URL = '/api';
 
-// In-memory / localStorage cache for mock state when backend is unreachable on static Vercel
+// In-memory / localStorage cache for mock state and user-customized listings
 function getLocalListings(): MaterialListing[] {
   try {
     const saved = localStorage.getItem('ecoloop_custom_listings');
+    const editedMap = JSON.parse(localStorage.getItem('ecoloop_edited_listings') || '{}');
+    let baseListings = MOCK_LISTINGS;
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return [...parsed, ...MOCK_LISTINGS];
+        baseListings = [...parsed, ...MOCK_LISTINGS];
       }
     }
+    return baseListings.map((item) => {
+      if (editedMap[item.id]) {
+        const edits = editedMap[item.id];
+        return {
+          ...item,
+          ...edits,
+          seller: {
+            ...(item.seller || {}),
+            businessName: edits.companyName || edits.seller?.businessName || item.seller?.businessName || 'Enterprise Partner',
+            city: edits.locationCity || item.seller?.city || 'Kolkata',
+          },
+          images: edits.imageUrl
+            ? [{ id: 'img-edit-' + item.id, listingId: item.id, url: edits.imageUrl, isPrimary: true }]
+            : (edits.images && edits.images.length > 0 ? edits.images : item.images),
+        };
+      }
+      return item;
+    });
   } catch {}
   return MOCK_LISTINGS;
 }
@@ -39,8 +59,24 @@ function getMockFallback<T>(url: string, options: RequestInit = {}): T | null {
     return { listings: allListings, total: allListings.length } as unknown as T;
   }
 
+  if (cleanUrl.startsWith('/materials/') && (method === 'PUT' || method === 'PATCH')) {
+    const id = cleanUrl.replace('/materials/', '');
+    const body = options.body ? JSON.parse(options.body as string) : {};
+    try {
+      const editedMap = JSON.parse(localStorage.getItem('ecoloop_edited_listings') || '{}');
+      editedMap[id] = {
+        ...editedMap[id],
+        ...body,
+      };
+      localStorage.setItem('ecoloop_edited_listings', JSON.stringify(editedMap));
+    } catch {}
+    const updated = getLocalListings().find(m => m.id === id) || allListings[0];
+    return { message: 'Listing updated successfully', listing: updated } as unknown as T;
+  }
+
   if (cleanUrl === '/materials' && method === 'POST') {
     const body = options.body ? JSON.parse(options.body as string) : {};
+    const sellerCompanyName = body.companyName || body.businessName || 'Your Enterprise';
     const newListing: MaterialListing = {
       id: 'custom-' + Date.now(),
       sellerId: '02f3d16e-3819-4dcf-8149-2b5d5e5b6101',
@@ -60,16 +96,16 @@ function getMockFallback<T>(url: string, options: RequestInit = {}): T | null {
       updatedAt: new Date().toISOString(),
       seller: {
         id: MOCK_USERS[0].id,
-        businessName: MOCK_USERS[0].businessName,
-        city: MOCK_USERS[0].city,
-        category: MOCK_USERS[0].category,
-        address: MOCK_USERS[0].address,
-        bio: MOCK_USERS[0].bio,
-        isVerified: MOCK_USERS[0].isVerified,
-        phone: MOCK_USERS[0].phone,
+        businessName: sellerCompanyName,
+        city: body.locationCity || MOCK_USERS[0].city,
+        category: body.category || MOCK_USERS[0].category,
+        address: body.locationAddress || MOCK_USERS[0].address,
+        bio: 'Verified supplier on EcoLoop',
+        isVerified: true,
+        phone: '+91 98301 22334',
         _count: {
-          listings: 5,
-          sellerOrders: 12,
+          listings: 1,
+          sellerOrders: 0,
         },
       },
       images: [

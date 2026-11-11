@@ -341,7 +341,13 @@ export const MarketplacePage: React.FC = () => {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {(listings || []).filter(Boolean).map((listing, idx) => (
-                  <MarketplaceCard key={listing.id || idx} listing={listing} />
+                  <MarketplaceCard
+                    key={listing.id || idx}
+                    listing={listing}
+                    onListingUpdated={(updated) => {
+                      setListings((prev) => prev.map((l) => (l.id === updated.id ? updated : l)));
+                    }}
+                  />
                 ))}
               </div>
             )}

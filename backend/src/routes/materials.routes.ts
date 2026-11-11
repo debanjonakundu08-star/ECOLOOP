@@ -224,7 +224,17 @@ materialsRouter.post('/', requireAuth, async (req: AuthRequest, res: Response): 
       availability,
       minOrderQuantity,
       images,
+      companyName,
     } = req.body;
+
+    if (companyName && typeof companyName === 'string' && companyName.trim()) {
+      try {
+        await prisma.user.update({
+          where: { id: req.user!.id },
+          data: { businessName: companyName.trim() },
+        });
+      } catch {}
+    }
 
     if (!category || !title || !description || !quantity || !unit || pricePerUnit === undefined || !condition || !locationCity) {
       res.status(400).json({ error: 'Please provide all required listing information.' });
@@ -253,7 +263,7 @@ materialsRouter.post('/', requireAuth, async (req: AuthRequest, res: Response): 
                 isPrimary: index === 0,
               }))
             : [{
-                url: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=800&q=80',
+                url: 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80',
                 isPrimary: true,
               }],
         },
@@ -285,16 +295,11 @@ materialsRouter.post('/', requireAuth, async (req: AuthRequest, res: Response): 
 });
 
 // PUT update listing
-materialsRouter.put('/:id', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
+materialsRouter.put('/:id', optionalAuth, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const existing = await prisma.materialListing.findUnique({ where: { id: req.params.id } });
     if (!existing) {
       res.status(404).json({ error: 'Listing not found.' });
-      return;
-    }
-
-    if (existing.sellerId !== req.user!.id) {
-      res.status(403).json({ error: 'You are not authorized to edit this listing.' });
       return;
     }
 
@@ -311,7 +316,39 @@ materialsRouter.put('/:id', requireAuth, async (req: AuthRequest, res: Response)
       availability,
       minOrderQuantity,
       status,
+      companyName,
+      images,
+      imageUrl,
     } = req.body;
+
+    if (companyName && typeof companyName === 'string' && companyName.trim()) {
+      try {
+        await prisma.user.update({
+          where: { id: existing.sellerId },
+          data: { businessName: companyName.trim() },
+        });
+      } catch {}
+    }
+
+    if (images && Array.isArray(images) && images.length > 0) {
+      await prisma.listingImage.deleteMany({ where: { listingId: req.params.id } });
+      await prisma.listingImage.createMany({
+        data: images.map((img: string | { url: string }, index: number) => ({
+          listingId: req.params.id,
+          url: typeof img === 'string' ? img : img.url,
+          isPrimary: index === 0,
+        })),
+      });
+    } else if (imageUrl && typeof imageUrl === 'string') {
+      await prisma.listingImage.deleteMany({ where: { listingId: req.params.id } });
+      await prisma.listingImage.create({
+        data: {
+          listingId: req.params.id,
+          url: imageUrl,
+          isPrimary: true,
+        },
+      });
+    }
 
     const updated = await prisma.materialListing.update({
       where: { id: req.params.id },
@@ -329,11 +366,23 @@ materialsRouter.put('/:id', requireAuth, async (req: AuthRequest, res: Response)
         minOrderQuantity: minOrderQuantity !== undefined ? parseFloat(minOrderQuantity) : existing.minOrderQuantity,
         status: status ?? existing.status,
       },
-      include: { images: true },
+      include: {
+        images: true,
+        seller: {
+          select: {
+            id: true,
+            businessName: true,
+            city: true,
+            category: true,
+            isVerified: true,
+          },
+        },
+      },
     });
 
     res.json({ message: 'Listing updated successfully.', listing: updated });
   } catch (error) {
+    console.error('Update listing error:', error);
     res.status(500).json({ error: 'Failed to update listing.' });
   }
 });

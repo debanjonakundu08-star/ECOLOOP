@@ -204,7 +204,7 @@ export const MOCK_LISTINGS: MaterialListing[] = [
     locationCity: 'Howrah',
     availability: 'Within 3 days',
     minOrderQuantity: 250,
-    images: [{ id: 'img_6', listingId: 'mat_6', url: 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=800&q=80', isPrimary: true }],
+    images: [{ id: 'img_6', listingId: 'mat_6', url: 'https://images.unsplash.com/photo-1565793298595-6a879b1d9492?auto=format&fit=crop&w=800&q=80', isPrimary: true }],
     status: 'ACTIVE',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
