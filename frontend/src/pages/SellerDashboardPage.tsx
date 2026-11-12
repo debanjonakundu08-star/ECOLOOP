@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import { MaterialRequest, MaterialListing, Order } from '../types';
 import { getCategoryFallbackImage, getListingPrimaryImage } from '../utils/categoryImages';
+import { useInterfaceMode } from '../context/InterfaceModeContext';
 import {
   Boxes,
   Clock,
@@ -15,6 +16,8 @@ import {
   Trash2,
   ExternalLink,
   Pencil,
+  ShoppingCart,
+  Store,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -30,6 +33,7 @@ import {
 import { motion } from 'framer-motion';
 
 export const SellerDashboardPage: React.FC = () => {
+  const { switchToBuyer } = useInterfaceMode();
   const [data, setData] = useState<{
     kpis: { activeListings: number; pendingRequests: number; completedSales: number; totalRevenue: number };
     recentRequests: MaterialRequest[];
@@ -81,34 +85,59 @@ export const SellerDashboardPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#F8FAF9] dark:bg-ecoDark-bg py-8 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
       <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-ecoDark-card px-3 py-1 rounded-full border border-emerald-100 dark:border-emerald-500/20">
-              Merchant Operations
-            </span>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-2 tracking-tight">
+        {/* Header & Interface Switcher Banner */}
+        <div className="bg-white dark:bg-ecoDark-surface rounded-3xl p-6 sm:p-8 border border-emerald-100/80 dark:border-emerald-500/20 shadow-card flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-500/30">
+                <Store className="w-3.5 h-3.5" />
+                Seller Inventory Interface
+              </span>
+              <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">•</span>
+              <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">Waste Generator &amp; Merchant Hub</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
               Seller Control Center
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-              Monitor active waste streams, review incoming bids, and manage circular transactions.
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-xl">
+              Manage your active waste streams, review incoming bids from verified buyers, track sales fulfillment, and monetize industrial surplus.
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Link
-              to="/seller/requests"
-              className="px-4 py-2.5 rounded-xl font-bold text-xs bg-white dark:bg-ecoDark-surface text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-emerald-500/20 hover:bg-slate-50 dark:hover:bg-ecoDark-hover transition-colors shadow-2xs"
-            >
-              View All Bids ({data.kpis.pendingRequests})
-            </Link>
-            <Link
-              to="/list-waste"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white transition-colors shadow-sm"
-            >
-              <PlusCircle className="w-4 h-4" />
-              <span>List New Waste</span>
-            </Link>
+          {/* Quick Actions & Switch to Buyer Procurement Hub */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+            <div className="bg-slate-50 dark:bg-ecoDark-card p-3 rounded-2xl border border-slate-200/80 dark:border-emerald-900/40 flex items-center justify-between gap-3">
+              <div className="text-left">
+                <div className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                  <ShoppingCart className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span>Procuring Raw Materials?</span>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">Find surplus &amp; submit purchase bids.</p>
+              </div>
+              <button
+                onClick={switchToBuyer}
+                className="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-900 dark:bg-emerald-600 hover:bg-emerald-700 text-white transition-all shadow-sm flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+              >
+                <span>Switch to Buyer Hub</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Link
+                to="/seller/requests"
+                className="px-4 py-2.5 rounded-xl font-bold text-xs bg-white dark:bg-ecoDark-surface text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-emerald-500/20 hover:bg-slate-50 dark:hover:bg-ecoDark-hover transition-colors shadow-2xs whitespace-nowrap"
+              >
+                View Bids ({data.kpis.pendingRequests})
+              </Link>
+              <Link
+                to="/list-waste"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white transition-colors shadow-sm whitespace-nowrap"
+              >
+                <PlusCircle className="w-4 h-4" />
+                <span>List Waste</span>
+              </Link>
+            </div>
           </div>
         </div>
 

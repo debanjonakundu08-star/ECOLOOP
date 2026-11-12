@@ -392,27 +392,119 @@ function getMockFallback<T>(url: string, options: RequestInit = {}): T | null {
   }
 
   if (cleanUrl === '/requests' && method === 'POST') {
+    const body = options.body ? JSON.parse(options.body as string) : {};
+    const currentUser = getMockUser() || MOCK_USERS[1];
+    const targetMaterial = allListings.find(m => m.id === body.materialId) || allListings[0];
+    const newReq: MaterialRequest = {
+      id: 'req-' + Date.now(),
+      materialId: targetMaterial.id,
+      buyerId: currentUser.id,
+      sellerId: targetMaterial.sellerId || MOCK_USERS[0].id,
+      quantity: parseFloat(body.quantity) || 500,
+      offeredPrice: parseFloat(body.offeredPrice) || 14.0,
+      pickupMethod: body.pickupMethod || 'EcoLoop Logistics',
+      message: body.message || 'Requesting dispatch',
+      status: 'PENDING',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      buyer: currentUser as any,
+      seller: (targetMaterial.seller || MOCK_USERS[0]) as any,
+      material: targetMaterial,
+    };
+    try {
+      const stored = JSON.parse(localStorage.getItem('ecoloop_buyer_requests') || '[]');
+      localStorage.setItem('ecoloop_buyer_requests', JSON.stringify([newReq, ...stored]));
+    } catch {}
     return {
       message: 'Purchase request sent successfully!',
-      request: {
-        id: 'req-' + Date.now(),
-        materialId: allListings[0].id,
-        buyerId: MOCK_USERS[1].id,
-        quantity: 500,
-        offeredPrice: 14.0,
-        pickupMethod: 'EcoLoop Logistics',
-        message: 'Requesting immediate dispatch',
-        status: 'PENDING',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        buyer: MOCK_USERS[1],
-        material: allListings[0],
-      }
+      request: newReq,
     } as unknown as T;
   }
 
-  if (cleanUrl === '/requests/seller' || cleanUrl === '/requests/buyer') {
-    return { requests: [] } as unknown as T;
+  if (cleanUrl === '/requests/buyer' && method === 'GET') {
+    let custom: MaterialRequest[] = [];
+    try {
+      custom = JSON.parse(localStorage.getItem('ecoloop_buyer_requests') || '[]');
+    } catch {}
+
+    const defaultBuyerRequests: MaterialRequest[] = [
+      {
+        id: 'req-demo-accepted',
+        materialId: allListings[0]?.id || 'mat-1',
+        buyerId: MOCK_USERS[1].id,
+        sellerId: allListings[0]?.sellerId || MOCK_USERS[0].id,
+        quantity: 1200,
+        offeredPrice: 14.5,
+        pickupMethod: 'EcoLoop Logistics',
+        message: 'Looking for prompt batch collection.',
+        status: 'ACCEPTED',
+        createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+        updatedAt: new Date(Date.now() - 86400000).toISOString(),
+        buyer: MOCK_USERS[1],
+        seller: allListings[0]?.seller || MOCK_USERS[0],
+        material: allListings[0],
+        orderId: 'ord-demo-101',
+      } as any,
+      {
+        id: 'req-demo-countered',
+        materialId: allListings[1]?.id || 'mat-2',
+        buyerId: MOCK_USERS[1].id,
+        sellerId: allListings[1]?.sellerId || MOCK_USERS[0].id,
+        quantity: 800,
+        offeredPrice: 22.0,
+        counterPrice: 24.5,
+        counterNotes: 'We can supply washed & baled grade at ₹24.50/kg.',
+        pickupMethod: 'Self Pickup',
+        message: 'Need monthly recurring delivery.',
+        status: 'COUNTERED',
+        createdAt: new Date(Date.now() - 86400000 * 4).toISOString(),
+        updatedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+        buyer: MOCK_USERS[1],
+        seller: allListings[1]?.seller || MOCK_USERS[0],
+        material: allListings[1],
+      },
+      {
+        id: 'req-demo-pending',
+        materialId: allListings[2]?.id || 'mat-3',
+        buyerId: MOCK_USERS[1].id,
+        sellerId: allListings[2]?.sellerId || MOCK_USERS[0].id,
+        quantity: 1500,
+        offeredPrice: 38.0,
+        pickupMethod: 'EcoLoop Logistics',
+        message: 'Formal procurement proposal submitted for evaluation.',
+        status: 'PENDING',
+        createdAt: new Date(Date.now() - 86400000 * 1).toISOString(),
+        updatedAt: new Date(Date.now() - 86400000 * 1).toISOString(),
+        buyer: MOCK_USERS[1],
+        seller: allListings[2]?.seller || MOCK_USERS[0],
+        material: allListings[2],
+      },
+    ];
+
+    return { requests: [...custom, ...defaultBuyerRequests] } as unknown as T;
+  }
+
+  if (cleanUrl === '/requests/seller' && method === 'GET') {
+    return {
+      requests: [
+        {
+          id: 'req-seller-demo-1',
+          materialId: allListings[0]?.id || 'mat-1',
+          buyerId: MOCK_USERS[1].id,
+          sellerId: MOCK_USERS[0].id,
+          quantity: 1200,
+          offeredPrice: 14.5,
+          pickupMethod: 'EcoLoop Logistics',
+          message: 'Interested in acquiring 1.2 metric tonnes for pulping.',
+          status: 'PENDING',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          buyer: MOCK_USERS[1],
+          seller: MOCK_USERS[0],
+          material: allListings[0],
+        },
+      ]
+    } as unknown as T;
   }
 
   if (cleanUrl === '/messages/conversations') {

@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
+import { InterfaceModeProvider } from './context/InterfaceModeContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -16,6 +17,8 @@ import { ListWastePage } from './pages/ListWastePage';
 import { RequestMaterialPage } from './pages/RequestMaterialPage';
 import { SellerDashboardPage } from './pages/SellerDashboardPage';
 import { SellerRequestsPage } from './pages/SellerRequestsPage';
+import { BuyerDashboardPage } from './pages/BuyerDashboardPage';
+import { BuyerRequestsPage } from './pages/BuyerRequestsPage';
 import { MessagingPage } from './pages/MessagingPage';
 import { OrdersPage } from './pages/OrdersPage';
 import { OrderDetailsPage } from './pages/OrderDetailsPage';
@@ -31,11 +34,12 @@ export const App: React.FC = () => {
       <AuthProvider>
         <ToastProvider>
           <BrowserRouter>
-            <div className="flex flex-col min-h-screen bg-[#F8FAF9] dark:bg-ecoDark-bg text-slate-800 dark:text-slate-100 transition-colors duration-300">
-              <Navbar />
-              <main className="flex-1">
-                <ErrorBoundary>
-                  <Routes>
+            <InterfaceModeProvider>
+              <div className="flex flex-col min-h-screen bg-[#F8FAF9] dark:bg-ecoDark-bg text-slate-800 dark:text-slate-100 transition-colors duration-300">
+                <Navbar />
+                <main className="flex-1">
+                  <ErrorBoundary>
+                    <Routes>
                     {/* Public Routes */}
                     <Route path="/" element={<HomePage />} />
                     <Route path="/login" element={<LoginPage />} />
@@ -94,6 +98,24 @@ export const App: React.FC = () => {
                   }
                 />
                 <Route
+                  path="/buyer/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <BuyerDashboardPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/buyer/requests"
+                  element={
+                    <ProtectedRoute>
+                      <BuyerRequestsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/buyer" element={<Navigate to="/buyer/dashboard" replace />} />
+                <Route path="/seller" element={<Navigate to="/seller/dashboard" replace />} />
+                <Route
                   path="/messages"
                   element={
                     <ProtectedRoute>
@@ -141,6 +163,7 @@ export const App: React.FC = () => {
           </main>
           <Footer />
           </div>
+            </InterfaceModeProvider>
         </BrowserRouter>
       </ToastProvider>
     </AuthProvider>

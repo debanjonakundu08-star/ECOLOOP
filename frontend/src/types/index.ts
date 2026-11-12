@@ -83,7 +83,7 @@ export interface MaterialRequest {
   offeredPrice: number;
   pickupMethod: string;
   message: string;
-  status: 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'NEGOTIATING';
+  status: 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'NEGOTIATING' | 'COUNTERED';
   counterPrice?: number | null;
   counterNotes?: string | null;
   createdAt: string;
