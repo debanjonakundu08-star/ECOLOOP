@@ -1,7 +1,10 @@
+export type UserRole = 'BUYER' | 'SELLER';
+
 export interface User {
   id: string;
   email: string;
   businessName: string;
+  role?: UserRole;
   contactPerson?: string;
   phone: string;
   city: string;
@@ -113,6 +116,7 @@ export interface Message {
   id: string;
   conversationId: string;
   senderId: string;
+  receiverId?: string;
   content: string;
   isNegotiation: boolean;
   proposedPrice?: number | null;
@@ -127,6 +131,8 @@ export interface Message {
 
 export interface Conversation {
   id: string;
+  user1Id?: string;
+  user2Id?: string;
   otherUser: {
     id: string;
     businessName: string;
@@ -144,6 +150,8 @@ export interface Conversation {
     status: string;
     material: MaterialListing;
   };
+  materialId?: string;
+  material?: MaterialListing;
 }
 
 export interface Order {

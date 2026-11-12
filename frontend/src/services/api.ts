@@ -247,18 +247,20 @@ function getMockFallback<T>(url: string, options: RequestInit = {}): T | null {
     try {
       registered = JSON.parse(localStorage.getItem('ecoloop_registered_users') || '[]');
     } catch {}
+    const selectedRole = (body.role || '').toUpperCase() === 'SELLER' ? 'SELLER' : 'BUYER';
     let user = registered.find(u => u.email.toLowerCase() === email);
     if (!user) {
       if (email === 'purchase@greentechpolymers.in' || email === 'buyer@ecoloop.com') {
-        user = MOCK_USERS[1];
+        user = { ...MOCK_USERS[1], role: 'BUYER' };
       } else if (email === 'greenpack@ecoloop.com' || email === 'seller@ecoloop.com' || email === 'packaging@bengaleco.in') {
-        user = MOCK_USERS[0];
+        user = { ...MOCK_USERS[0], role: 'SELLER' };
       } else if (email) {
-        // Fallback persistent business account derived from email so any new login gets its own identity
+        // Fallback persistent business account derived from email
         user = {
           id: 'usr_' + email.replace(/[^a-z0-9]/g, '_'),
           businessName: email.split('@')[0].replace(/[^a-zA-Z0-9 ]/g, ' ').toUpperCase(),
           email,
+          role: selectedRole,
           phone: '+91 98300 00000',
           city: 'Kolkata',
           category: 'Packaging materials',
@@ -271,6 +273,8 @@ function getMockFallback<T>(url: string, options: RequestInit = {}): T | null {
       } else {
         throw new Error('Please enter your business email and password.');
       }
+    } else if (body.role && user.role !== selectedRole) {
+      user = { ...user, role: selectedRole };
     }
     const token = 'mock_token_' + user.id;
     try {
@@ -295,10 +299,12 @@ function getMockFallback<T>(url: string, options: RequestInit = {}): T | null {
     if (existing) {
       throw new Error('A business with this email already exists.');
     }
+    const assignedRole = (body.role || '').toUpperCase() === 'SELLER' ? 'SELLER' : 'BUYER';
     const newUser: User = {
       id: 'usr_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
       businessName: body.businessName?.trim() || 'EcoLoop Enterprise',
       email,
+      role: assignedRole,
       contactPerson: body.contactPerson?.trim() || undefined,
       phone: body.phone?.trim() || '+91 98300 00000',
       city: body.city || 'Kolkata',
@@ -556,12 +562,60 @@ function getMockFallback<T>(url: string, options: RequestInit = {}): T | null {
     } as unknown as T;
   }
 
+  if (cleanUrl === '/messages/send' && method === 'POST') {
+    const body = options.body ? JSON.parse(options.body as string) : {};
+    const currentUser = getMockUser() || MOCK_USERS[0];
+    const newMsg: Message = {
+      id: 'msg-' + Date.now(),
+      conversationId: body.conversationId || 'conv-1',
+      senderId: currentUser.id,
+      receiverId: body.receiverId || MOCK_USERS[1].id,
+      content: body.content,
+      isNegotiation: body.isNegotiation || false,
+      proposedPrice: body.proposedPrice,
+      isRead: true,
+      createdAt: new Date().toISOString(),
+      sender: currentUser,
+    };
+    return { message: newMsg } as unknown as T;
+  }
+
   if (cleanUrl === '/profile/me') {
     return { profile: MOCK_USERS[0] } as unknown as T;
   }
 
-  if (cleanUrl === '/saved') {
-    return { savedListings: [] } as unknown as T;
+  if (cleanUrl === '/saved' && method === 'GET') {
+    let savedIds: string[] = ['mat_1', 'mat_2'];
+    try {
+      const stored = localStorage.getItem('ecoloop_saved_listings');
+      if (stored) savedIds = JSON.parse(stored);
+    } catch {}
+    const savedListings = allListings.filter(m => savedIds.includes(m.id));
+    return { savedListings } as unknown as T;
+  }
+
+  if (cleanUrl.startsWith('/saved/') && method === 'POST') {
+    const listingId = cleanUrl.replace('/saved/', '');
+    let savedIds: string[] = ['mat_1', 'mat_2'];
+    try {
+      const stored = localStorage.getItem('ecoloop_saved_listings');
+      if (stored) savedIds = JSON.parse(stored);
+      if (!savedIds.includes(listingId)) savedIds.push(listingId);
+      localStorage.setItem('ecoloop_saved_listings', JSON.stringify(savedIds));
+    } catch {}
+    return { message: 'Item added to wishlist', isSaved: true } as unknown as T;
+  }
+
+  if (cleanUrl.startsWith('/saved/') && method === 'DELETE') {
+    const listingId = cleanUrl.replace('/saved/', '');
+    let savedIds: string[] = ['mat_1', 'mat_2'];
+    try {
+      const stored = localStorage.getItem('ecoloop_saved_listings');
+      if (stored) savedIds = JSON.parse(stored);
+      savedIds = savedIds.filter(id => id !== listingId);
+      localStorage.setItem('ecoloop_saved_listings', JSON.stringify(savedIds));
+    } catch {}
+    return { message: 'Item removed from wishlist', isSaved: false } as unknown as T;
   }
 
   return null;

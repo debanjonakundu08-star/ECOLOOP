@@ -24,6 +24,9 @@ messagesRouter.get('/conversations', requireAuth, async (req: AuthRequest, res: 
             },
           },
         },
+        material: {
+          include: { images: true },
+        },
         messages: {
           orderBy: { createdAt: 'desc' },
           take: 1,
@@ -63,6 +66,7 @@ messagesRouter.get('/conversations', requireAuth, async (req: AuthRequest, res: 
           lastMessageAt: conv.messages[0]?.createdAt || conv.lastMessageAt,
           unreadCount,
           request: conv.request,
+          material: conv.material || conv.request?.material,
         };
       })
     );
@@ -87,6 +91,9 @@ messagesRouter.get('/conversation/:id', requireAuth, async (req: AuthRequest, re
           include: {
             material: { include: { images: true } },
           },
+        },
+        material: {
+          include: { images: true },
         },
       },
     });
@@ -142,7 +149,7 @@ messagesRouter.get('/conversation/:id', requireAuth, async (req: AuthRequest, re
 // POST send a message
 messagesRouter.post('/send', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { conversationId, receiverId, content, isNegotiation, proposedPrice } = req.body;
+    const { conversationId, receiverId, content, isNegotiation, proposedPrice, materialId } = req.body;
     const userId = req.user!.id;
 
     if (!content || !content.trim()) {
@@ -153,12 +160,17 @@ messagesRouter.post('/send', requireAuth, async (req: AuthRequest, res: Response
     let targetConvId = conversationId;
 
     if (!targetConvId && receiverId) {
-      // Find or create conversation
+      // Find or create conversation for these participants (and this material if specified)
       let conv = await prisma.conversation.findFirst({
         where: {
-          OR: [
-            { participant1Id: userId, participant2Id: receiverId },
-            { participant1Id: receiverId, participant2Id: userId },
+          AND: [
+            {
+              OR: [
+                { participant1Id: userId, participant2Id: receiverId },
+                { participant1Id: receiverId, participant2Id: userId },
+              ],
+            },
+            ...(materialId ? [{ materialId }] : []),
           ],
         },
       });
@@ -168,6 +180,7 @@ messagesRouter.post('/send', requireAuth, async (req: AuthRequest, res: Response
           data: {
             participant1Id: userId,
             participant2Id: receiverId,
+            materialId: materialId || null,
             lastMessage: content.trim(),
             lastMessageAt: new Date(),
           },

@@ -3,17 +3,19 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
-import { InterfaceModeProvider } from './context/InterfaceModeContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { RoleRoute } from './components/RoleRoute';
 
 import { HomePage } from './pages/HomePage';
 import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
 import { MarketplacePage } from './pages/MarketplacePage';
 import { MaterialDetailPage } from './pages/MaterialDetailPage';
-import { ListWastePage } from './pages/ListWastePage';
+import { SellerAddListingPage } from './pages/SellerAddListingPage';
+import { SellerListingsPage } from './pages/SellerListingsPage';
+import { BuyerWishlistPage } from './pages/BuyerWishlistPage';
 import { RequestMaterialPage } from './pages/RequestMaterialPage';
 import { SellerDashboardPage } from './pages/SellerDashboardPage';
 import { SellerRequestsPage } from './pages/SellerRequestsPage';
@@ -34,12 +36,11 @@ export const App: React.FC = () => {
       <AuthProvider>
         <ToastProvider>
           <BrowserRouter>
-            <InterfaceModeProvider>
-              <div className="flex flex-col min-h-screen bg-[#F8FAF9] dark:bg-ecoDark-bg text-slate-800 dark:text-slate-100 transition-colors duration-300">
-                <Navbar />
-                <main className="flex-1">
-                  <ErrorBoundary>
-                    <Routes>
+            <div className="flex flex-col min-h-screen bg-[#F8FAF9] dark:bg-ecoDark-bg text-slate-800 dark:text-slate-100 transition-colors duration-300">
+              <Navbar />
+              <main className="flex-1">
+                <ErrorBoundary>
+                  <Routes>
                     {/* Public Routes */}
                     <Route path="/" element={<HomePage />} />
                     <Route path="/login" element={<LoginPage />} />
@@ -48,126 +49,148 @@ export const App: React.FC = () => {
                     <Route path="/materials/:id" element={<MaterialDetailPage />} />
                     <Route path="/impact" element={<ImpactDashboardPage />} />
 
-                {/* Protected Routes */}
-                <Route
-                  path="/list-waste"
-                  element={
-                    <ProtectedRoute>
-                      <ListWastePage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/materials/:id/edit"
-                  element={
-                    <ProtectedRoute>
-                      <EditListingPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/edit/:id"
-                  element={
-                    <ProtectedRoute>
-                      <EditListingPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/request/:id"
-                  element={
-                    <ProtectedRoute>
-                      <RequestMaterialPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/seller/dashboard"
-                  element={
-                    <ProtectedRoute>
-                      <SellerDashboardPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/seller/requests"
-                  element={
-                    <ProtectedRoute>
-                      <SellerRequestsPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/buyer/dashboard"
-                  element={
-                    <ProtectedRoute>
-                      <BuyerDashboardPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/buyer/requests"
-                  element={
-                    <ProtectedRoute>
-                      <BuyerRequestsPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route path="/buyer" element={<Navigate to="/buyer/dashboard" replace />} />
-                <Route path="/seller" element={<Navigate to="/seller/dashboard" replace />} />
-                <Route
-                  path="/messages"
-                  element={
-                    <ProtectedRoute>
-                      <MessagingPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/orders"
-                  element={
-                    <ProtectedRoute>
-                      <OrdersPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/orders/:id"
-                  element={
-                    <ProtectedRoute>
-                      <OrderDetailsPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/checkout/:id"
-                  element={
-                    <ProtectedRoute>
-                      <CheckoutPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/profile"
-                  element={
-                    <ProtectedRoute>
-                      <ProfilePage />
-                    </ProtectedRoute>
-                  }
-                />
+                    {/* Dedicated Buyer Routes */}
+                    <Route
+                      path="/buyer/dashboard"
+                      element={
+                        <RoleRoute allowedRole="BUYER">
+                          <BuyerDashboardPage />
+                        </RoleRoute>
+                      }
+                    />
+                    <Route
+                      path="/buyer/wishlist"
+                      element={
+                        <RoleRoute allowedRole="BUYER">
+                          <BuyerWishlistPage />
+                        </RoleRoute>
+                      }
+                    />
+                    <Route
+                      path="/buyer/requests"
+                      element={
+                        <RoleRoute allowedRole="BUYER">
+                          <BuyerRequestsPage />
+                        </RoleRoute>
+                      }
+                    />
+                    <Route path="/buyer" element={<Navigate to="/buyer/dashboard" replace />} />
 
-                {/* Catch-all redirect */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </ErrorBoundary>
-          </main>
-          <Footer />
-          </div>
-            </InterfaceModeProvider>
-        </BrowserRouter>
-      </ToastProvider>
-    </AuthProvider>
-  </ThemeProvider>
+                    {/* Dedicated Seller Routes */}
+                    <Route
+                      path="/seller/dashboard"
+                      element={
+                        <RoleRoute allowedRole="SELLER">
+                          <SellerDashboardPage />
+                        </RoleRoute>
+                      }
+                    />
+                    <Route
+                      path="/seller/listings"
+                      element={
+                        <RoleRoute allowedRole="SELLER">
+                          <SellerListingsPage />
+                        </RoleRoute>
+                      }
+                    />
+                    <Route
+                      path="/seller/add-listing"
+                      element={
+                        <RoleRoute allowedRole="SELLER">
+                          <SellerAddListingPage />
+                        </RoleRoute>
+                      }
+                    />
+                    <Route
+                      path="/seller/requests"
+                      element={
+                        <RoleRoute allowedRole="SELLER">
+                          <SellerRequestsPage />
+                        </RoleRoute>
+                      }
+                    />
+                    <Route
+                      path="/materials/:id/edit"
+                      element={
+                        <RoleRoute allowedRole="SELLER">
+                          <EditListingPage />
+                        </RoleRoute>
+                      }
+                    />
+                    <Route
+                      path="/edit/:id"
+                      element={
+                        <RoleRoute allowedRole="SELLER">
+                          <EditListingPage />
+                        </RoleRoute>
+                      }
+                    />
+                    <Route path="/seller" element={<Navigate to="/seller/dashboard" replace />} />
+
+                    {/* Redirects & Legacy paths */}
+                    <Route path="/list-waste" element={<Navigate to="/seller/add-listing" replace />} />
+
+                    {/* Shared Authenticated Routes */}
+                    <Route
+                      path="/request/:id"
+                      element={
+                        <ProtectedRoute>
+                          <RequestMaterialPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/messages"
+                      element={
+                        <ProtectedRoute>
+                          <MessagingPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/orders"
+                      element={
+                        <ProtectedRoute>
+                          <OrdersPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/orders/:id"
+                      element={
+                        <ProtectedRoute>
+                          <OrderDetailsPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/checkout/:id"
+                      element={
+                        <ProtectedRoute>
+                          <CheckoutPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/profile"
+                      element={
+                        <ProtectedRoute>
+                          <ProfilePage />
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    {/* Catch-all redirect */}
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                  </Routes>
+                </ErrorBoundary>
+              </main>
+              <Footer />
+            </div>
+          </BrowserRouter>
+        </ToastProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 };
 

@@ -45,13 +45,13 @@ export const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/list-waste" className="hover:text-emerald-400 transition-colors">
-                  List Excess Material
+                <Link to="/seller/add-listing" className="hover:text-emerald-400 transition-colors">
+                  Add New Listing
                 </Link>
               </li>
               <li>
-                <Link to="/impact" className="hover:text-emerald-400 transition-colors">
-                  Impact Dashboard
+                <Link to="/buyer/dashboard" className="hover:text-emerald-400 transition-colors">
+                  Buyer Hub
                 </Link>
               </li>
               <li>

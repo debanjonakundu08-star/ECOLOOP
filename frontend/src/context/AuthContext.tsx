@@ -5,7 +5,7 @@ import { api } from '../services/api';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<User>;
+  login: (email: string, password: string, role?: 'BUYER' | 'SELLER') => Promise<User>;
   signup: (data: any) => Promise<User>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -37,10 +37,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     fetchCurrentUser();
   }, []);
 
-  const login = async (email: string, password: string): Promise<User> => {
+  const login = async (email: string, password: string, role?: 'BUYER' | 'SELLER'): Promise<User> => {
     setLoading(true);
     try {
-      const res = await api.auth.login({ email, password });
+      const res = await api.auth.login({ email, password, role });
       if (res.token) {
         localStorage.setItem('ecoloop_token', res.token);
       }

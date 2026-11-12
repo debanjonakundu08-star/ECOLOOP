@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { api } from '../services/api';
 import { MaterialListing, ImpactSummary } from '../types';
 import { MarketplaceCard } from '../components/MarketplaceCard';
+import { useAuth } from '../context/AuthContext';
 import {
   ArrowRight,
   Recycle,
@@ -13,9 +14,12 @@ import {
   Search,
   CheckCircle2,
   Zap,
+  ShoppingCart,
+  Store,
 } from 'lucide-react';
 
 export const HomePage: React.FC = () => {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [featuredListings, setFeaturedListings] = useState<MaterialListing[]>([]);
   const [impactData, setImpactData] = useState<ImpactSummary | null>(null);
@@ -126,23 +130,55 @@ export const HomePage: React.FC = () => {
               </div>
             </form>
 
-            {/* CTA Buttons */}
-            <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link
-                to="/marketplace"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl font-bold text-sm bg-emerald-500 hover:bg-emerald-400 text-forest-950 transition-all shadow-lg shadow-emerald-500/25 hover:scale-[1.03] active:scale-[0.98]"
-              >
-                <span>Explore Marketplace</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
+            {/* Role Selection Gateway: Continue as Buyer vs Continue as Seller */}
+            <div className="pt-6 grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto text-left">
+              {/* Buyer Portal Card */}
+              <div className="bg-white/10 dark:bg-emerald-950/60 p-6 rounded-2xl border border-white/20 dark:border-emerald-500/30 backdrop-blur-md hover:bg-white/15 transition-all group flex flex-col justify-between">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-400/20 text-emerald-300 border border-emerald-400/30">
+                      <ShoppingCart className="w-3 h-3" />
+                      Buyer Portal
+                    </span>
+                    <ArrowRight className="w-4 h-4 text-emerald-400 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                  <h3 className="text-xl font-black text-white">Continue as Buyer</h3>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Browse verified secondary commodities, filter by grade &amp; volume, negotiate directly via live chat, and track orders.
+                  </p>
+                </div>
+                <Link
+                  to={user ? (user.role === 'BUYER' ? '/buyer/dashboard' : '/buyer/dashboard') : '/login?role=buyer'}
+                  className="mt-5 w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-center transition-all flex items-center justify-center gap-1.5 shadow-md hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  <span>{user && user.role === 'BUYER' ? 'Go to Buyer Hub' : 'Enter as Buyer'}</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
 
-              <Link
-                to="/list-waste"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl font-bold text-sm bg-white/10 dark:bg-ecoDark-surface hover:bg-white/20 text-white border border-white/20 dark:border-emerald-500/30 backdrop-blur-sm transition-all hover:scale-[1.03] active:scale-[0.98]"
-              >
-                <span>List Your Waste</span>
-                <Zap className="w-4 h-4 text-emerald-400" />
-              </Link>
+              {/* Seller Portal Card */}
+              <div className="bg-white/10 dark:bg-emerald-950/60 p-6 rounded-2xl border border-white/20 dark:border-emerald-500/30 backdrop-blur-md hover:bg-white/15 transition-all group flex flex-col justify-between">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-teal-400/20 text-teal-300 border border-teal-400/30">
+                      <Store className="w-3 h-3" />
+                      Seller Portal
+                    </span>
+                    <ArrowRight className="w-4 h-4 text-teal-400 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                  <h3 className="text-xl font-black text-white">Continue as Seller</h3>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Monetize industrial production scrap, upload photos, manage active listings, and communicate with interested buyers.
+                  </p>
+                </div>
+                <Link
+                  to={user ? (user.role === 'SELLER' ? '/seller/dashboard' : '/seller/dashboard') : '/login?role=seller'}
+                  className="mt-5 w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-white dark:bg-ecoDark-surface hover:bg-slate-100 text-slate-900 dark:text-white text-center transition-all flex items-center justify-center gap-1.5 shadow-md hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  <span>{user && user.role === 'SELLER' ? 'Go to Seller Dashboard' : 'Enter as Seller'}</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
             </div>
 
             {/* Trust Badges */}
@@ -411,7 +447,7 @@ export const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* 7. Quick Demo Business Switcher / Fast Test Box */}
+      {/* 7. Quick Role Demo Switcher / Fast Test Box */}
       <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           whileHover={{ scale: 1.01 }}
@@ -419,22 +455,30 @@ export const HomePage: React.FC = () => {
         >
           <div className="max-w-xl space-y-3">
             <span className="text-xs font-extrabold uppercase tracking-wider text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/90 px-3 py-1 rounded-full">
-              Demo Test Hub
+              Demo Access Hub
             </span>
             <h3 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-              Ready to Test the Full Platform Flow?
+              Test Both Buyer and Seller Roles
             </h3>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-              Log in with our pre-configured business account to both list your own surplus waste materials AND purchase materials from other enterprises in one unified dashboard.
+              Experience the separated interfaces instantly using our pre-configured industrial buyer and seller demo accounts.
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 shrink-0 w-full md:w-auto">
             <Link
-              to="/login?demo=true"
-              className="px-6 py-3.5 rounded-xl text-center font-bold text-xs bg-emerald-600 dark:bg-emerald-500 text-white hover:bg-emerald-500 dark:hover:bg-emerald-400 transition-all shadow-sm hover:scale-105 active:scale-95"
+              to="/login?role=buyer&demo=true"
+              className="px-5 py-3 rounded-xl text-center font-bold text-xs bg-emerald-700 dark:bg-emerald-600 text-white hover:bg-emerald-800 transition-all shadow-sm hover:scale-105 active:scale-95 flex items-center justify-center gap-1.5"
             >
-              Try Unified Business Account (Buy & Sell)
+              <ShoppingCart className="w-3.5 h-3.5" />
+              <span>Login as Buyer Demo</span>
+            </Link>
+            <Link
+              to="/login?role=seller&demo=true"
+              className="px-5 py-3 rounded-xl text-center font-bold text-xs bg-slate-900 dark:bg-ecoDark-surface text-white hover:bg-slate-800 border border-slate-700 dark:border-emerald-500/30 transition-all shadow-sm hover:scale-105 active:scale-95 flex items-center justify-center gap-1.5"
+            >
+              <Store className="w-3.5 h-3.5" />
+              <span>Login as Seller Demo</span>
             </Link>
           </div>
         </motion.div>

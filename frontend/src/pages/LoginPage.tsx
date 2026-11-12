@@ -1,7 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Recycle, Mail, Lock, AlertCircle, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { UserRole } from '../types';
+import {
+  Recycle,
+  Mail,
+  Lock,
+  AlertCircle,
+  ArrowRight,
+  CheckCircle2,
+  ShoppingCart,
+  Store,
+} from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export const LoginPage: React.FC = () => {
@@ -9,19 +19,39 @@ export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
+  const initialRoleParam = searchParams.get('role');
+  const [selectedRole, setSelectedRole] = useState<UserRole>(
+    initialRoleParam?.toLowerCase() === 'seller' ? 'SELLER' : 'BUYER'
+  );
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Auto-fill if demo parameter present
+  // Sync role if url query changes
+  useEffect(() => {
+    const roleParam = searchParams.get('role');
+    if (roleParam?.toLowerCase() === 'seller') {
+      setSelectedRole('SELLER');
+    } else if (roleParam?.toLowerCase() === 'buyer') {
+      setSelectedRole('BUYER');
+    }
+  }, [searchParams]);
+
+  // Auto-fill demo credentials based on selected role
   useEffect(() => {
     const demo = searchParams.get('demo');
     if (demo) {
-      setEmail('greenpack@ecoloop.com');
-      setPassword('ecoloop123');
+      if (selectedRole === 'SELLER') {
+        setEmail('greenpack@ecoloop.com');
+        setPassword('ecoloop123');
+      } else {
+        setEmail('purchase@greentechpolymers.in');
+        setPassword('ecoloop123');
+      }
     }
-  }, [searchParams]);
+  }, [searchParams, selectedRole]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,19 +59,28 @@ export const LoginPage: React.FC = () => {
     setLoading(true);
 
     try {
-      await login(email, password);
-      navigate('/marketplace');
+      const loggedUser = await login(email, password, selectedRole);
+      const destination = (loggedUser.role || selectedRole) === 'SELLER'
+        ? '/seller/dashboard'
+        : '/buyer/dashboard';
+      navigate(destination, { replace: true });
     } catch (err: any) {
-      setError(err.message || 'Failed to login. Please verify your credentials.');
+      setError(err.message || 'Failed to login. Please verify your business credentials.');
     } finally {
       setLoading(false);
     }
   };
 
-  const fillDemo = () => {
-    setEmail('greenpack@ecoloop.com');
-    setPassword('ecoloop123');
+  const fillRoleDemo = (role: UserRole) => {
+    setSelectedRole(role);
     setError('');
+    if (role === 'SELLER') {
+      setEmail('greenpack@ecoloop.com');
+      setPassword('ecoloop123');
+    } else {
+      setEmail('purchase@greentechpolymers.in');
+      setPassword('ecoloop123');
+    }
   };
 
   return (
@@ -54,7 +93,7 @@ export const LoginPage: React.FC = () => {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="max-w-md w-full space-y-8 bg-white dark:bg-ecoDark-surface p-8 sm:p-10 rounded-3xl shadow-card dark:shadow-glow-sm border border-emerald-100 dark:border-emerald-500/20 transition-all duration-300"
+        className="max-w-md w-full space-y-6 bg-white dark:bg-ecoDark-surface p-8 sm:p-10 rounded-3xl shadow-card dark:shadow-glow-sm border border-emerald-100 dark:border-emerald-500/20 transition-all duration-300"
       >
         {/* Header */}
         <div className="text-center space-y-2">
@@ -62,32 +101,66 @@ export const LoginPage: React.FC = () => {
             <Recycle className="w-6 h-6 animate-spin [animation-duration:15s]" />
           </div>
           <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-            Sign in to EcoLoop
+            Sign In to EcoLoop
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            One unified business account to both buy &amp; sell circular materials
+            Select your account type to access your dedicated dashboard
           </p>
         </div>
 
-        {/* Demo Quick-Login Button */}
-        <div className="bg-emerald-50/70 dark:bg-ecoDark-card/70 p-3.5 rounded-2xl border border-emerald-100 dark:border-emerald-500/20 space-y-2">
-          <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-900 dark:text-emerald-300">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-            <span>Instant Demo Business Account:</span>
+        {/* 1. Mandatory Role Selection Tabs */}
+        <div className="space-y-1.5">
+          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+            Choose Your Role
+          </label>
+          <div className="grid grid-cols-2 gap-2 p-1 rounded-2xl bg-slate-100 dark:bg-ecoDark-card border border-slate-200/80 dark:border-emerald-950/60">
+            <button
+              type="button"
+              onClick={() => setSelectedRole('BUYER')}
+              className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                selectedRole === 'BUYER'
+                  ? 'bg-white dark:bg-emerald-600 text-emerald-900 dark:text-white shadow-sm font-black'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <ShoppingCart className="w-4 h-4 text-emerald-600 dark:text-emerald-300" />
+              <span>Continue as Buyer</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedRole('SELLER')}
+              className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                selectedRole === 'SELLER'
+                  ? 'bg-white dark:bg-emerald-600 text-emerald-900 dark:text-white shadow-sm font-black'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <Store className="w-4 h-4 text-emerald-600 dark:text-emerald-300" />
+              <span>Continue as Seller</span>
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={fillDemo}
-            className="w-full py-2.5 px-3 rounded-xl text-left bg-white dark:bg-ecoDark-surface border border-emerald-200 dark:border-emerald-500/30 hover:border-emerald-400 dark:hover:border-emerald-400 text-[11px] font-semibold text-slate-700 dark:text-slate-200 transition-colors shadow-2xs hover:shadow-xs flex items-center justify-between"
-          >
-            <div>
-              <div className="font-bold text-emerald-800 dark:text-emerald-400">Bengal Eco Packaging Ltd (Kolkata)</div>
-              <div className="text-slate-400 dark:text-slate-400 text-[10px]">Buy from other businesses &amp; manage your own listings</div>
-            </div>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300">
-              Fill Demo
+        </div>
+
+        {/* Demo Quick-Login Banner */}
+        <div className="bg-emerald-50/70 dark:bg-ecoDark-card/70 p-3 rounded-2xl border border-emerald-100 dark:border-emerald-500/20 space-y-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-emerald-900 dark:text-emerald-300 flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span>Demo Account ({selectedRole === 'BUYER' ? 'Buyer' : 'Seller'})</span>
             </span>
-          </button>
+            <button
+              type="button"
+              onClick={() => fillRoleDemo(selectedRole)}
+              className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-600 hover:bg-emerald-700 text-white transition-colors cursor-pointer"
+            >
+              Fill Demo
+            </button>
+          </div>
+          <p className="text-[10px] text-slate-500 dark:text-slate-400">
+            {selectedRole === 'BUYER'
+              ? 'GreenTech Polymers (Howrah) — Sourcing & procurement view'
+              : 'Bengal Eco Packaging Ltd (Kolkata) — Waste listings & inventory view'}
+          </p>
         </div>
 
         {/* Error Alert */}
@@ -101,31 +174,39 @@ export const LoginPage: React.FC = () => {
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Business Email</label>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+              Business Email Address
+            </label>
             <div className="relative">
-              <Mail className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3.5 top-3.5" />
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <Mail className="w-4 h-4" />
+              </div>
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@company.com"
-                className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-emerald-900/60 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none bg-white dark:bg-ecoDark-card text-slate-900 dark:text-white transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600"
+                placeholder={selectedRole === 'BUYER' ? 'buyer@company.com' : 'seller@company.com'}
+                className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-emerald-500/20 bg-slate-50/50 dark:bg-ecoDark-bg text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all placeholder:text-slate-400"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Password</label>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+              Password
+            </label>
             <div className="relative">
-              <Lock className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3.5 top-3.5" />
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <Lock className="w-4 h-4" />
+              </div>
               <input
                 type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-emerald-900/60 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none bg-white dark:bg-ecoDark-card text-slate-900 dark:text-white transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600"
+                className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-emerald-500/20 bg-slate-50/50 dark:bg-ecoDark-bg text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all placeholder:text-slate-400"
               />
             </div>
           </div>
@@ -133,19 +214,30 @@ export const LoginPage: React.FC = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 rounded-xl font-bold text-sm bg-forest-900 dark:bg-emerald-600 hover:bg-forest-800 dark:hover:bg-emerald-500 text-white transition-all shadow-md shadow-emerald-950/20 flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+            className="w-full py-3.5 px-4 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-emerald-700 via-emerald-600 to-teal-600 hover:from-emerald-600 hover:to-teal-500 shadow-md shadow-emerald-700/20 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2 cursor-pointer"
           >
-            <span>{loading ? 'Authenticating...' : 'Sign In'}</span>
-            <ArrowRight className="w-4 h-4" />
+            {loading ? (
+              <span>Authenticating...</span>
+            ) : (
+              <>
+                <span>Sign In as {selectedRole === 'BUYER' ? 'Buyer' : 'Seller'}</span>
+                <ArrowRight className="w-4 h-4" />
+              </>
+            )}
           </button>
         </form>
 
-        {/* Footer Link to Signup */}
-        <div className="text-center text-xs text-slate-500 dark:text-slate-400">
-          Don't have a business account yet?{' '}
-          <Link to="/signup" className="font-bold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 transition-colors">
-            Register your enterprise
-          </Link>
+        {/* Footer Link */}
+        <div className="text-center pt-2 border-t border-slate-100 dark:border-emerald-950/60">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Don&apos;t have an account yet?{' '}
+            <Link
+              to={`/signup?role=${selectedRole.toLowerCase()}`}
+              className="font-bold text-emerald-700 dark:text-emerald-400 hover:underline"
+            >
+              Register as {selectedRole === 'BUYER' ? 'Buyer' : 'Seller'}
+            </Link>
+          </p>
         </div>
       </motion.div>
     </div>

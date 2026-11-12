@@ -174,6 +174,11 @@ materialsRouter.post('/', requireAuth, async (req: AuthRequest, res: Response): 
       companyName,
     } = req.body;
 
+    if (req.user?.role && req.user.role.toUpperCase() === 'BUYER') {
+      res.status(403).json({ error: 'Access denied (403): Only registered sellers can create listings. Buyers cannot add items for sale.' });
+      return;
+    }
+
     if (companyName && typeof companyName === 'string' && companyName.trim()) {
       try {
         await prisma.user.update({

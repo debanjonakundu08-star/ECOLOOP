@@ -19,6 +19,7 @@ model User {
   category        String           // e.g. "Manufacturing", "Packaging", "F&B", "Textiles", "Recycling", "Retail"
   bio             String?
   isVerified      Boolean          @default(true)
+  role            String           @default("BUYER") // "BUYER" | "SELLER"
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 
@@ -68,6 +69,7 @@ model MaterialListing {
   requests         MaterialRequest[]
   orders           Order[]
   savedBy          SavedListing[]
+  conversations    Conversation[]
 }
 
 model ListingImage {
@@ -104,6 +106,8 @@ model Conversation {
   id             String           @id @default(uuid())
   requestId      String?          @unique
   request        MaterialRequest? @relation(fields: [requestId], references: [id], onDelete: SetNull)
+  materialId     String?
+  material       MaterialListing? @relation(fields: [materialId], references: [id], onDelete: SetNull)
   participant1Id String
   participant2Id String
   lastMessage    String?

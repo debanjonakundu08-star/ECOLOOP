@@ -11,6 +11,7 @@ export interface AuthRequest extends Request {
     businessName: string;
     city: string;
     category: string;
+    role: string;
   };
 }
 
@@ -35,6 +36,7 @@ export async function requireAuth(req: AuthRequest, res: Response, next: NextFun
         businessName: true,
         city: true,
         category: true,
+        role: true,
       },
     });
 
@@ -48,6 +50,24 @@ export async function requireAuth(req: AuthRequest, res: Response, next: NextFun
   } catch (error) {
     res.status(401).json({ error: 'Invalid or expired authentication token.' });
   }
+}
+
+export function requireRole(...allowedRoles: string[]) {
+  return (req: AuthRequest, res: Response, next: NextFunction): void => {
+    if (!req.user) {
+      res.status(401).json({ error: 'Authentication required.' });
+      return;
+    }
+    const userRole = (req.user.role || 'BUYER').toUpperCase();
+    const normalizedAllowed = allowedRoles.map((r) => r.toUpperCase());
+    if (!normalizedAllowed.includes(userRole)) {
+      res.status(403).json({
+        error: `Access denied (403): This resource requires role "${allowedRoles.join(' or ')}", but your account is registered as "${req.user.role}".`,
+      });
+      return;
+    }
+    next();
+  };
 }
 
 export async function optionalAuth(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
@@ -67,6 +87,7 @@ export async function optionalAuth(req: AuthRequest, res: Response, next: NextFu
           businessName: true,
           city: true,
           category: true,
+          role: true,
         },
       });
       if (user) {

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { UserRole } from '../types';
 import {
   Recycle,
   Mail,
@@ -12,12 +13,20 @@ import {
   AlertCircle,
   ArrowRight,
   UserCheck,
+  ShoppingCart,
+  Store,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export const SignupPage: React.FC = () => {
   const { signup } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const initialRoleParam = searchParams.get('role');
+  const [selectedRole, setSelectedRole] = useState<UserRole>(
+    initialRoleParam?.toLowerCase() === 'seller' ? 'SELLER' : 'BUYER'
+  );
 
   const [formData, setFormData] = useState({
     businessName: '',
@@ -33,6 +42,15 @@ export const SignupPage: React.FC = () => {
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const roleParam = searchParams.get('role');
+    if (roleParam?.toLowerCase() === 'seller') {
+      setSelectedRole('SELLER');
+    } else if (roleParam?.toLowerCase() === 'buyer') {
+      setSelectedRole('BUYER');
+    }
+  }, [searchParams]);
 
   const categories = [
     'Manufacturing',
@@ -67,8 +85,9 @@ export const SignupPage: React.FC = () => {
 
     setLoading(true);
     try {
-      await signup(formData);
-      navigate('/marketplace');
+      const newUser = await signup({ ...formData, role: selectedRole });
+      const dest = (newUser?.role || selectedRole) === 'SELLER' ? '/seller/dashboard' : '/buyer/dashboard';
+      navigate(dest, { replace: true });
     } catch (err: any) {
       setError(err.message || 'Failed to create business account.');
     } finally {
@@ -97,6 +116,44 @@ export const SignupPage: React.FC = () => {
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400">
             Join the verified B2B circular economy network
+          </p>
+        </div>
+
+        {/* Role Selector Tabs */}
+        <div className="space-y-1.5">
+          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+            Select Your Account Role *
+          </label>
+          <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-emerald-950/40 rounded-2xl border border-slate-200 dark:border-emerald-800/40">
+            <button
+              type="button"
+              onClick={() => setSelectedRole('BUYER')}
+              className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+                selectedRole === 'BUYER'
+                  ? 'bg-white dark:bg-emerald-600 text-emerald-800 dark:text-white shadow-sm ring-2 ring-emerald-500/20'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <ShoppingCart className="w-4 h-4 text-emerald-600 dark:text-emerald-300" />
+              <span>Register as Buyer</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedRole('SELLER')}
+              className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+                selectedRole === 'SELLER'
+                  ? 'bg-white dark:bg-emerald-600 text-emerald-800 dark:text-white shadow-sm ring-2 ring-emerald-500/20'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <Store className="w-4 h-4 text-emerald-600 dark:text-emerald-300" />
+              <span>Register as Seller</span>
+            </button>
+          </div>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 text-center">
+            {selectedRole === 'BUYER'
+              ? '🛒 Buyer account: browse catalog, enquire, and procure secondary raw materials.'
+              : '📦 Seller account: list industrial scrap, manage listings, and receive buyer enquiries.'}
           </p>
         </div>
 

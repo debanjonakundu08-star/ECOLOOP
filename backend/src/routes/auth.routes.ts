@@ -32,13 +32,14 @@ function issueAuthResponse(res: Response, user: any, message: string) {
       category: user.category,
       bio: user.bio,
       isVerified: user.isVerified,
+      role: user.role || 'BUYER',
     },
   });
 }
 
 authRouter.post('/signup', async (req: Request, res: Response): Promise<void> => {
   try {
-    const { businessName, email, phone, password, confirmPassword, city, category, address, contactPerson, bio } = req.body;
+    const { businessName, email, phone, password, confirmPassword, city, category, address, contactPerson, bio, role } = req.body;
 
     if (!businessName || !email || !password || !phone || !city || !category) {
       res.status(400).json({ error: 'Please fill in all required fields.' });
@@ -62,6 +63,7 @@ authRouter.post('/signup', async (req: Request, res: Response): Promise<void> =>
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    const assignedRole = role === 'SELLER' ? 'SELLER' : 'BUYER';
 
     const newUser = await prisma.user.create({
       data: {
@@ -74,6 +76,7 @@ authRouter.post('/signup', async (req: Request, res: Response): Promise<void> =>
         address: address ? address.trim() : null,
         contactPerson: contactPerson ? contactPerson.trim() : null,
         bio: bio ? bio.trim() : null,
+        role: assignedRole,
         isVerified: true,
       },
     });

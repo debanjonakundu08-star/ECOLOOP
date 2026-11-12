@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { useInterfaceMode } from '../context/InterfaceModeContext';
 import { api } from '../services/api';
 import { Notification } from '../types';
 import {
@@ -23,14 +22,15 @@ import {
   Moon,
   ShoppingCart,
   Store,
+  Heart,
   Boxes,
   Send,
+  Layers,
 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const { mode, switchToBuyer, switchToSeller } = useInterfaceMode();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -42,6 +42,9 @@ export const Navbar: React.FC = () => {
 
   const notifRef = useRef<HTMLDivElement>(null);
   const userRef = useRef<HTMLDivElement>(null);
+
+  const isSeller = user?.role === 'SELLER';
+  const isBuyer = user?.role === 'BUYER';
 
   useEffect(() => {
     if (user) {
@@ -73,8 +76,8 @@ export const Navbar: React.FC = () => {
   const loadNotifications = async () => {
     try {
       const res = await api.notifications.getAll();
-      setNotifications(res.notifications);
-      setUnreadCount(res.unreadCount);
+      setNotifications(res.notifications || []);
+      setUnreadCount(res.unreadCount || 0);
     } catch {
       // ignore
     }
@@ -117,11 +120,14 @@ export const Navbar: React.FC = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <header className="sticky top-0 z-50 bg-white/85 dark:bg-[#071a13]/90 backdrop-blur-md border-b border-emerald-950/10 dark:border-emerald-500/20 shadow-xs dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)] transition-colors duration-300">
+    <header className="sticky top-0 z-50 bg-white/90 dark:bg-[#071a13]/90 backdrop-blur-md border-b border-emerald-950/10 dark:border-emerald-500/20 shadow-xs dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)] transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20 gap-2 sm:gap-4">
           {/* Logo & Tagline */}
-          <Link to="/" className="flex items-center gap-3 group shrink-0">
+          <Link
+            to={isSeller ? '/seller/dashboard' : isBuyer ? '/buyer/dashboard' : '/'}
+            className="flex items-center gap-3 group shrink-0"
+          >
             <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-emerald-800 to-emerald-500 dark:from-emerald-600 dark:to-teal-400 flex items-center justify-center text-white shadow-md shadow-emerald-900/20 dark:shadow-emerald-500/20 group-hover:scale-105 transition-all duration-300">
               <Recycle className="w-6 h-6 animate-[spin_12s_linear_infinite]" />
             </div>
@@ -131,7 +137,7 @@ export const Navbar: React.FC = () => {
                   Eco<span className="text-emerald-600 dark:text-emerald-400">Loop</span>
                 </span>
                 <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
-                  B2B
+                  {isSeller ? 'Seller' : isBuyer ? 'Buyer' : 'B2B'}
                 </span>
               </div>
               <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 tracking-tight hidden sm:block">
@@ -140,38 +146,22 @@ export const Navbar: React.FC = () => {
             </div>
           </Link>
 
-          {/* Desktop Interface Mode Switcher: Buyer vs Seller */}
-          <div className="hidden md:flex items-center p-1 rounded-2xl bg-slate-100 dark:bg-ecoDark-surface border border-slate-200/80 dark:border-emerald-500/30 text-xs font-bold shadow-2xs">
-            <button
-              onClick={switchToBuyer}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
-                mode === 'buyer'
-                  ? 'bg-white dark:bg-emerald-600 text-emerald-900 dark:text-white shadow-xs font-black'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-300'
-              }`}
-              title="Switch to Buyer Procurement Interface"
-            >
-              <ShoppingCart className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-300" />
-              <span>Buyer View</span>
-            </button>
-            <button
-              onClick={switchToSeller}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
-                mode === 'seller'
-                  ? 'bg-white dark:bg-emerald-600 text-emerald-900 dark:text-white shadow-xs font-black'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-300'
-              }`}
-              title="Switch to Seller Waste Generator Interface"
-            >
-              <Store className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-300" />
-              <span>Seller View</span>
-            </button>
-          </div>
-
-          {/* Adaptive Desktop Navigation Links based on Interface Mode */}
-          <nav className="hidden xl:flex items-center gap-1">
-            {mode === 'buyer' ? (
+          {/* Desktop Navigation Links - Role Partitioned */}
+          <nav className="hidden lg:flex items-center gap-1">
+            {isBuyer && (
               <>
+                <Link
+                  to="/buyer/dashboard"
+                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    isActive('/buyer/dashboard')
+                      ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border dark:border-emerald-500/30'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-ecoDark-surface'
+                  }`}
+                >
+                  <LayoutDashboard className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span>Home / Explore</span>
+                </Link>
+
                 <Link
                   to="/marketplace"
                   className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
@@ -181,137 +171,147 @@ export const Navbar: React.FC = () => {
                   }`}
                 >
                   <Search className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                  <span>Marketplace</span>
+                  <span>Browse Items</span>
                 </Link>
 
-                {user && (
-                  <>
-                    <Link
-                      to="/buyer/dashboard"
-                      className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                        isActive('/buyer/dashboard')
-                          ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border dark:border-emerald-500/30'
-                          : 'text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-ecoDark-surface'
-                      }`}
-                    >
-                      <LayoutDashboard className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                      <span>Buyer Hub</span>
-                    </Link>
-
-                    <Link
-                      to="/buyer/requests"
-                      className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                        isActive('/buyer/requests')
-                          ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border dark:border-emerald-500/30'
-                          : 'text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-ecoDark-surface'
-                      }`}
-                    >
-                      <Send className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                      <span>My Offers</span>
-                    </Link>
-
-                    <Link
-                      to="/orders"
-                      className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                        isActive('/orders')
-                          ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border dark:border-emerald-500/30'
-                          : 'text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-ecoDark-surface'
-                      }`}
-                    >
-                      <PackageCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                      <span>Purchases</span>
-                    </Link>
-                  </>
-                )}
-
                 <Link
-                  to="/impact"
+                  to="/buyer/wishlist"
                   className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                    isActive('/impact')
+                    isActive('/buyer/wishlist')
                       ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border dark:border-emerald-500/30'
                       : 'text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-ecoDark-surface'
                   }`}
                 >
-                  <BarChart3 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                  <span>Impact</span>
+                  <Heart className="w-3.5 h-3.5 text-rose-500" />
+                  <span>Wishlist</span>
+                </Link>
+
+                <Link
+                  to="/messages"
+                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    isActive('/messages')
+                      ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border dark:border-emerald-500/30'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-ecoDark-surface'
+                  }`}
+                >
+                  <MessageSquare className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span>Messages</span>
+                </Link>
+
+                <Link
+                  to="/orders"
+                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    isActive('/orders')
+                      ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border dark:border-emerald-500/30'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-ecoDark-surface'
+                  }`}
+                >
+                  <PackageCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span>My Orders</span>
                 </Link>
               </>
-            ) : (
+            )}
+
+            {isSeller && (
               <>
-                {user && (
-                  <>
-                    <Link
-                      to="/seller/dashboard"
-                      className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                        isActive('/seller/dashboard')
-                          ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border dark:border-emerald-500/30'
-                          : 'text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-ecoDark-surface'
-                      }`}
-                    >
-                      <LayoutDashboard className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                      <span>Seller Hub</span>
-                    </Link>
-
-                    <Link
-                      to="/seller/requests"
-                      className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                        isActive('/seller/requests')
-                          ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border dark:border-emerald-500/30'
-                          : 'text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-ecoDark-surface'
-                      }`}
-                    >
-                      <Inbox className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                      <span>Incoming Bids</span>
-                    </Link>
-
-                    <Link
-                      to="/orders"
-                      className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                        isActive('/orders')
-                          ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border dark:border-emerald-500/30'
-                          : 'text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-ecoDark-surface'
-                      }`}
-                    >
-                      <PackageCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                      <span>Sales Orders</span>
-                    </Link>
-                  </>
-                )}
-
                 <Link
-                  to="/marketplace"
+                  to="/seller/dashboard"
                   className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                    isActive('/marketplace')
+                    isActive('/seller/dashboard')
                       ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border dark:border-emerald-500/30'
                       : 'text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-ecoDark-surface'
                   }`}
                 >
+                  <LayoutDashboard className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span>Dashboard</span>
+                </Link>
+
+                <Link
+                  to="/seller/listings"
+                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    isActive('/seller/listings')
+                      ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border dark:border-emerald-500/30'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-ecoDark-surface'
+                  }`}
+                >
+                  <Boxes className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span>My Listings</span>
+                </Link>
+
+                <Link
+                  to="/seller/add-listing"
+                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    isActive('/seller/add-listing')
+                      ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border dark:border-emerald-500/30'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-ecoDark-surface'
+                  }`}
+                >
+                  <PlusCircle className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span>Add New Listing</span>
+                </Link>
+
+                <Link
+                  to="/messages"
+                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    isActive('/messages')
+                      ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border dark:border-emerald-500/30'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-ecoDark-surface'
+                  }`}
+                >
+                  <MessageSquare className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span>Messages</span>
+                </Link>
+
+                <Link
+                  to="/orders"
+                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    isActive('/orders')
+                      ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border dark:border-emerald-500/30'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-ecoDark-surface'
+                  }`}
+                >
+                  <PackageCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span>Orders / Transactions</span>
+                </Link>
+              </>
+            )}
+
+            {!user && (
+              <>
+                <Link
+                  to="/marketplace"
+                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    isActive('/marketplace')
+                      ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-ecoDark-surface'
+                  }`}
+                >
                   <Search className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                  <span>Marketplace</span>
+                  <span>Explore Marketplace</span>
                 </Link>
 
                 <Link
                   to="/impact"
                   className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                     isActive('/impact')
-                      ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border dark:border-emerald-500/30'
+                      ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300'
                       : 'text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-ecoDark-surface'
                   }`}
                 >
                   <BarChart3 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                  <span>Impact</span>
+                  <span>Impact Metrics</span>
                 </Link>
               </>
             )}
           </nav>
 
-          {/* Right Action Icons & Theme Toggle */}
+          {/* Right Action Toolbar & Theme Toggle */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             {/* Theme Toggle Button */}
             <button
               onClick={toggleTheme}
               className="px-2.5 sm:px-3 py-2 rounded-xl bg-emerald-50 dark:bg-ecoDark-surface hover:bg-emerald-100 dark:hover:bg-ecoDark-hover text-emerald-900 dark:text-amber-300 border border-emerald-200/80 dark:border-emerald-500/30 shadow-xs transition-all duration-300 hover:scale-105 active:scale-95 flex items-center gap-1.5 cursor-pointer"
-              title={theme === 'dark' ? 'Switch to Forest Light Mode' : 'Switch to Eco Dark Mode'}
+              title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
               aria-label="Toggle Color Theme"
             >
               {theme === 'dark' ? (
@@ -327,24 +327,24 @@ export const Navbar: React.FC = () => {
               )}
             </button>
 
-            {/* Context-Adaptive Primary Action Button */}
-            {mode === 'seller' ? (
+            {/* Role-Specific Primary Quick Action Button */}
+            {isSeller ? (
               <Link
-                to={user ? '/list-waste' : '/login'}
-                className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-bold text-xs bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white shadow-md shadow-emerald-600/30 dark:shadow-emerald-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all whitespace-nowrap"
+                to="/seller/add-listing"
+                className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-bold text-xs bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white shadow-md shadow-emerald-700/20 hover:scale-[1.02] active:scale-[0.98] transition-all whitespace-nowrap"
               >
                 <PlusCircle className="w-4 h-4" />
-                <span>List Waste</span>
+                <span>Add New Listing</span>
               </Link>
-            ) : (
+            ) : isBuyer ? (
               <Link
                 to="/marketplace"
-                className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-bold text-xs bg-gradient-to-r from-emerald-700 to-teal-600 hover:from-emerald-600 hover:to-teal-500 text-white shadow-md shadow-emerald-700/30 hover:scale-[1.02] active:scale-[0.98] transition-all whitespace-nowrap"
+                className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-bold text-xs bg-forest-900 dark:bg-emerald-600 hover:bg-forest-800 dark:hover:bg-emerald-500 text-white shadow-md shadow-emerald-950/20 hover:scale-[1.02] active:scale-[0.98] transition-all whitespace-nowrap"
               >
                 <Search className="w-4 h-4" />
                 <span>Browse Surplus</span>
               </Link>
-            )}
+            ) : null}
 
             {user ? (
               <>
@@ -382,7 +382,7 @@ export const Navbar: React.FC = () => {
                         {unreadCount > 0 && (
                           <button
                             onClick={handleMarkAllRead}
-                            className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:underline"
+                            className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer"
                           >
                             Mark all as read
                           </button>
@@ -433,89 +433,111 @@ export const Navbar: React.FC = () => {
                     <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-ecoDark-card rounded-2xl shadow-xl border border-slate-100 dark:border-emerald-500/30 py-2 z-50 animate-fadeIn text-slate-900 dark:text-white">
                       {/* User Info Header */}
                       <div className="px-4 py-2.5 border-b border-slate-100 dark:border-emerald-950">
-                        <p className="font-bold text-sm text-slate-900 dark:text-white truncate">{user.businessName}</p>
+                        <div className="flex items-center justify-between">
+                          <p className="font-bold text-sm text-slate-900 dark:text-white truncate">{user.businessName}</p>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider ${
+                            isSeller
+                              ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300'
+                              : 'bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300'
+                          }`}>
+                            {user.role}
+                          </span>
+                        </div>
                         <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user.email}</p>
-                        <span className="mt-1 inline-block px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300">
+                        <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
                           {user.city} • {user.category}
-                        </span>
+                        </p>
                       </div>
 
-                      {/* Interface Switcher in Menu */}
-                      <div className="px-3 py-2.5 border-b border-slate-100 dark:border-emerald-950/80 bg-slate-50/70 dark:bg-ecoDark-surface/60">
-                        <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400 dark:text-slate-500 mb-1.5">
-                          Active Interface View
-                        </div>
-                        <div className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-slate-200/60 dark:bg-ecoDark-card">
-                          <button
-                            onClick={() => { switchToBuyer(); setUserDropdownOpen(false); }}
-                            className={`py-1.5 text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 cursor-pointer transition-all ${
-                              mode === 'buyer'
-                                ? 'bg-white dark:bg-emerald-600 text-emerald-900 dark:text-white shadow-xs font-black'
-                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-                            }`}
-                          >
-                            <ShoppingCart className="w-3.5 h-3.5" />
-                            <span>Buyer</span>
-                          </button>
-                          <button
-                            onClick={() => { switchToSeller(); setUserDropdownOpen(false); }}
-                            className={`py-1.5 text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 cursor-pointer transition-all ${
-                              mode === 'seller'
-                                ? 'bg-white dark:bg-emerald-600 text-emerald-900 dark:text-white shadow-xs font-black'
-                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-                            }`}
-                          >
-                            <Store className="w-3.5 h-3.5" />
-                            <span>Seller</span>
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Navigation Shortcuts */}
+                      {/* Navigation Shortcuts strictly matching user role */}
                       <div className="py-1">
-                        <Link
-                          to="/buyer/dashboard"
-                          onClick={() => setUserDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-ecoDark-surface hover:text-emerald-600 dark:hover:text-emerald-400"
-                        >
-                          <ShoppingCart className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                          <span>Buyer Procurement Hub</span>
-                        </Link>
+                        {isBuyer && (
+                          <>
+                            <Link
+                              to="/buyer/dashboard"
+                              onClick={() => setUserDropdownOpen(false)}
+                              className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-ecoDark-surface hover:text-emerald-600 dark:hover:text-emerald-400"
+                            >
+                              <LayoutDashboard className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                              <span>Buyer Dashboard</span>
+                            </Link>
+
+                            <Link
+                              to="/marketplace"
+                              onClick={() => setUserDropdownOpen(false)}
+                              className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-ecoDark-surface hover:text-emerald-600 dark:hover:text-emerald-400"
+                            >
+                              <Search className="w-4 h-4 text-slate-400" />
+                              <span>Browse Items</span>
+                            </Link>
+
+                            <Link
+                              to="/buyer/wishlist"
+                              onClick={() => setUserDropdownOpen(false)}
+                              className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-ecoDark-surface hover:text-emerald-600 dark:hover:text-emerald-400"
+                            >
+                              <Heart className="w-4 h-4 text-rose-500" />
+                              <span>Wishlist</span>
+                            </Link>
+
+                            <Link
+                              to="/orders"
+                              onClick={() => setUserDropdownOpen(false)}
+                              className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-ecoDark-surface hover:text-emerald-600 dark:hover:text-emerald-400"
+                            >
+                              <PackageCheck className="w-4 h-4 text-slate-400" />
+                              <span>My Orders</span>
+                            </Link>
+                          </>
+                        )}
+
+                        {isSeller && (
+                          <>
+                            <Link
+                              to="/seller/dashboard"
+                              onClick={() => setUserDropdownOpen(false)}
+                              className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-ecoDark-surface hover:text-emerald-600 dark:hover:text-emerald-400"
+                            >
+                              <LayoutDashboard className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                              <span>Seller Dashboard</span>
+                            </Link>
+
+                            <Link
+                              to="/seller/listings"
+                              onClick={() => setUserDropdownOpen(false)}
+                              className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-ecoDark-surface hover:text-emerald-600 dark:hover:text-emerald-400"
+                            >
+                              <Boxes className="w-4 h-4 text-slate-400" />
+                              <span>My Listings</span>
+                            </Link>
+
+                            <Link
+                              to="/seller/add-listing"
+                              onClick={() => setUserDropdownOpen(false)}
+                              className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-ecoDark-surface hover:text-emerald-600 dark:hover:text-emerald-400"
+                            >
+                              <PlusCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                              <span>Add New Listing</span>
+                            </Link>
+
+                            <Link
+                              to="/orders"
+                              onClick={() => setUserDropdownOpen(false)}
+                              className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-ecoDark-surface hover:text-emerald-600 dark:hover:text-emerald-400"
+                            >
+                              <PackageCheck className="w-4 h-4 text-slate-400" />
+                              <span>Orders / Transactions</span>
+                            </Link>
+                          </>
+                        )}
 
                         <Link
-                          to="/buyer/requests"
+                          to="/messages"
                           onClick={() => setUserDropdownOpen(false)}
                           className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-ecoDark-surface hover:text-emerald-600 dark:hover:text-emerald-400"
                         >
-                          <Send className="w-4 h-4 text-slate-400" />
-                          <span>My Purchase Bids</span>
-                        </Link>
-
-                        <Link
-                          to="/seller/dashboard"
-                          onClick={() => setUserDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-ecoDark-surface hover:text-emerald-600 dark:hover:text-emerald-400"
-                        >
-                          <Store className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                          <span>Seller Control Center</span>
-                        </Link>
-
-                        <Link
-                          to="/seller/requests"
-                          onClick={() => setUserDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-ecoDark-surface hover:text-emerald-600 dark:hover:text-emerald-400"
-                        >
-                          <Inbox className="w-4 h-4 text-slate-400" />
-                          <span>Incoming Requests</span>
-                        </Link>
-
-                        <Link
-                          to="/orders"
-                          onClick={() => setUserDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-ecoDark-surface hover:text-emerald-600 dark:hover:text-emerald-400"
-                        >
-                          <PackageCheck className="w-4 h-4 text-slate-400" />
-                          <span>Orders &amp; Transactions</span>
+                          <MessageSquare className="w-4 h-4 text-slate-400" />
+                          <span>Messages</span>
                         </Link>
 
                         <Link
@@ -524,7 +546,7 @@ export const Navbar: React.FC = () => {
                           className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-ecoDark-surface hover:text-emerald-600 dark:hover:text-emerald-400"
                         >
                           <UserIcon className="w-4 h-4 text-slate-400" />
-                          <span>Business Profile</span>
+                          <span>Profile</span>
                         </Link>
                       </div>
 
@@ -544,16 +566,16 @@ export const Navbar: React.FC = () => {
             ) : (
               <div className="flex items-center gap-2">
                 <Link
-                  to="/login"
-                  className="px-4 py-2 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-ecoDark-surface transition-colors"
+                  to="/login?role=buyer"
+                  className="px-3.5 py-2 rounded-xl text-xs font-bold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-ecoDark-surface transition-colors border border-emerald-200 dark:border-emerald-800/60"
                 >
-                  Log In
+                  Continue as Buyer
                 </Link>
                 <Link
-                  to="/signup"
-                  className="px-4 py-2 rounded-xl text-sm font-bold bg-slate-900 dark:bg-emerald-600 text-white hover:bg-emerald-700 dark:hover:bg-emerald-500 transition-colors shadow-xs"
+                  to="/login?role=seller"
+                  className="px-3.5 py-2 rounded-xl text-xs font-bold bg-forest-900 dark:bg-emerald-600 text-white hover:bg-forest-800 dark:hover:bg-emerald-500 transition-colors shadow-xs"
                 >
-                  Sign Up
+                  Continue as Seller
                 </Link>
               </div>
             )}
@@ -572,150 +594,145 @@ export const Navbar: React.FC = () => {
         {/* Mobile Navigation Dropdown */}
         {mobileMenuOpen && (
           <div className="lg:hidden border-t border-slate-100 dark:border-emerald-950/60 py-4 space-y-3 animate-fadeIn bg-white dark:bg-ecoDark-card px-3 rounded-b-2xl shadow-lg">
-            {/* Mobile Interface Switcher */}
-            <div className="p-1 rounded-xl bg-slate-100 dark:bg-ecoDark-surface flex items-center gap-1">
-              <button
-                onClick={() => switchToBuyer()}
-                className={`flex-1 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                  mode === 'buyer'
-                    ? 'bg-white dark:bg-emerald-600 text-emerald-800 dark:text-white shadow-xs font-black'
-                    : 'text-slate-600 dark:text-slate-400'
-                }`}
-              >
-                <ShoppingCart className="w-3.5 h-3.5" />
-                <span>Buyer Interface</span>
-              </button>
-              <button
-                onClick={() => switchToSeller()}
-                className={`flex-1 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                  mode === 'seller'
-                    ? 'bg-white dark:bg-emerald-600 text-emerald-800 dark:text-white shadow-xs font-black'
-                    : 'text-slate-600 dark:text-slate-400'
-                }`}
-              >
-                <Store className="w-3.5 h-3.5" />
-                <span>Seller Interface</span>
-              </button>
-            </div>
-
-            {/* Mobile Theme Switcher */}
-            <button
-              onClick={toggleTheme}
-              className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-semibold bg-emerald-50/60 dark:bg-ecoDark-surface text-slate-800 dark:text-slate-100 border border-emerald-100 dark:border-emerald-500/20"
-            >
-              <span className="flex items-center gap-2">
-                {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-300" /> : <Moon className="w-4 h-4 text-emerald-700" />}
-                <span>{theme === 'dark' ? 'Forest Light Mode' : 'Eco Dark Mode'}</span>
-              </span>
-              <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-white dark:bg-ecoDark-card text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30">
-                {theme === 'dark' ? 'Switch to Light' : 'Switch to Dark'}
-              </span>
-            </button>
-
-            {/* Primary Action Button */}
-            {mode === 'seller' ? (
-              <Link
-                to={user ? '/list-waste' : '/login'}
-                className="block text-center px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-emerald-700 hover:bg-emerald-800 shadow-sm"
-              >
-                + List Your Waste Stream
-              </Link>
-            ) : (
-              <Link
-                to="/marketplace"
-                className="block text-center px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-emerald-700 hover:bg-emerald-800 shadow-sm"
-              >
-                Explore Surplus Marketplace
-              </Link>
+            {/* Mobile Account Role Banner if logged in */}
+            {user && (
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-ecoDark-surface border border-slate-200/80 dark:border-emerald-900/60 flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{user.businessName}</p>
+                  <p className="text-[10px] text-slate-400">{user.email}</p>
+                </div>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider ${
+                  isSeller
+                    ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300'
+                    : 'bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300'
+                }`}>
+                  {user.role}
+                </span>
+              </div>
             )}
 
-            {/* Navigation links */}
+            {/* Mobile Navigation links */}
             <div className="space-y-1 pt-1">
-              {mode === 'buyer' ? (
+              {isBuyer && (
                 <>
                   <Link
                     to="/buyer/dashboard"
                     className="block px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-ecoDark-surface"
                   >
-                    Buyer Procurement Hub
+                    Home / Explore
                   </Link>
                   <Link
-                    to="/buyer/requests"
+                    to="/marketplace"
                     className="block px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-ecoDark-surface"
                   >
-                    My Sent Bids &amp; Offers
+                    Browse Items
+                  </Link>
+                  <Link
+                    to="/buyer/wishlist"
+                    className="block px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-ecoDark-surface"
+                  >
+                    Wishlist
+                  </Link>
+                  <Link
+                    to="/messages"
+                    className="block px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-ecoDark-surface"
+                  >
+                    Messages
+                  </Link>
+                  <Link
+                    to="/orders"
+                    className="block px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-ecoDark-surface"
+                  >
+                    My Orders / Transactions
+                  </Link>
+                  <Link
+                    to="/profile"
+                    className="block px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-ecoDark-surface"
+                  >
+                    Profile
                   </Link>
                 </>
-              ) : (
+              )}
+
+              {isSeller && (
                 <>
                   <Link
                     to="/seller/dashboard"
                     className="block px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-ecoDark-surface"
                   >
-                    Seller Control Center
+                    Dashboard
                   </Link>
                   <Link
-                    to="/seller/requests"
+                    to="/seller/listings"
                     className="block px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-ecoDark-surface"
                   >
-                    Incoming Bids ({unreadCount})
+                    My Listings
+                  </Link>
+                  <Link
+                    to="/seller/add-listing"
+                    className="block px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-ecoDark-surface text-emerald-700 dark:text-emerald-400 font-bold"
+                  >
+                    + Add New Listing
+                  </Link>
+                  <Link
+                    to="/messages"
+                    className="block px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-ecoDark-surface"
+                  >
+                    Messages
+                  </Link>
+                  <Link
+                    to="/orders"
+                    className="block px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-ecoDark-surface"
+                  >
+                    Orders / Transactions
+                  </Link>
+                  <Link
+                    to="/profile"
+                    className="block px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-ecoDark-surface"
+                  >
+                    Profile
                   </Link>
                 </>
               )}
 
-              <Link
-                to="/marketplace"
-                className="block px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-ecoDark-surface"
-              >
-                Surplus Marketplace
-              </Link>
-              <Link
-                to="/orders"
-                className="block px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-ecoDark-surface"
-              >
-                Orders &amp; Shipments
-              </Link>
-              <Link
-                to="/messages"
-                className="block px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-ecoDark-surface"
-              >
-                Messages &amp; Negotiations
-              </Link>
-              <Link
-                to="/impact"
-                className="block px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-ecoDark-surface"
-              >
-                Environmental Impact
-              </Link>
-              <Link
-                to="/profile"
-                className="block px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-ecoDark-surface"
-              >
-                Business Profile
-              </Link>
+              {!user && (
+                <>
+                  <Link
+                    to="/marketplace"
+                    className="block px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-ecoDark-surface"
+                  >
+                    Explore Marketplace
+                  </Link>
+                  <Link
+                    to="/impact"
+                    className="block px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-ecoDark-surface"
+                  >
+                    Environmental Impact
+                  </Link>
+                  <div className="pt-2 grid grid-cols-2 gap-2">
+                    <Link
+                      to="/login?role=buyer"
+                      className="text-center py-2.5 rounded-xl text-xs font-bold border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-ecoDark-surface"
+                    >
+                      Buyer Login
+                    </Link>
+                    <Link
+                      to="/login?role=seller"
+                      className="text-center py-2.5 rounded-xl text-xs font-bold bg-emerald-700 text-white hover:bg-emerald-800"
+                    >
+                      Seller Login
+                    </Link>
+                  </div>
+                </>
+              )}
 
-              {user ? (
+              {user && (
                 <button
                   onClick={handleLogout}
-                  className="w-full text-left px-4 py-2.5 rounded-xl text-sm font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
+                  className="w-full text-left px-4 py-2.5 rounded-xl text-sm font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer"
                 >
                   Sign Out
                 </button>
-              ) : (
-                <div className="pt-2 grid grid-cols-2 gap-2">
-                  <Link
-                    to="/login"
-                    className="text-center py-2.5 rounded-xl text-sm font-bold border border-slate-200 dark:border-emerald-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-ecoDark-surface"
-                  >
-                    Log In
-                  </Link>
-                  <Link
-                    to="/signup"
-                    className="text-center py-2.5 rounded-xl text-sm font-bold bg-emerald-700 text-white"
-                  >
-                    Sign Up
-                  </Link>
-                </div>
               )}
             </div>
           </div>

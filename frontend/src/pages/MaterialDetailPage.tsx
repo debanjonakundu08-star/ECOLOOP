@@ -15,6 +15,7 @@ import {
   Calendar,
   ArrowLeft,
   Camera,
+  MessageSquare,
 } from 'lucide-react';
 
 export const MaterialDetailPage: React.FC = () => {
@@ -88,7 +89,7 @@ export const MaterialDetailPage: React.FC = () => {
     );
   }
 
-  const isSellerOwner = user && user.id === listing.sellerId;
+  const isSellerOwner = !!(user && user.role === 'SELLER' && user.id === listing.sellerId);
 
   return (
     <div className="min-h-screen bg-[#F8FAF9] dark:bg-ecoDark-bg py-8 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
@@ -288,15 +289,15 @@ export const MaterialDetailPage: React.FC = () => {
                 {isSellerOwner ? (
                   <>
                     <Link
-                      to="/seller/dashboard"
+                      to="/seller/listings"
                       className="w-full sm:flex-1 py-3.5 rounded-xl text-center font-bold text-sm bg-slate-100 dark:bg-ecoDark-card hover:bg-slate-200 dark:hover:bg-ecoDark-hover text-slate-800 dark:text-white transition-colors"
                     >
-                      Manage This Listing in Business Hub
+                      Manage in My Listings
                     </Link>
                     <button
                       type="button"
                       onClick={() => setIsEditOpen(true)}
-                      className="w-full sm:w-auto px-5 py-3.5 rounded-xl text-center font-bold text-sm bg-emerald-50 dark:bg-ecoDark-card hover:bg-emerald-100 dark:hover:bg-ecoDark-hover text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30 transition-colors flex items-center justify-center gap-2"
+                      className="w-full sm:w-auto px-5 py-3.5 rounded-xl text-center font-bold text-sm bg-emerald-50 dark:bg-ecoDark-card hover:bg-emerald-100 dark:hover:bg-ecoDark-hover text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30 transition-colors flex items-center justify-center gap-2 cursor-pointer"
                       title="Edit company name or change photo"
                     >
                       <Camera className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
@@ -306,18 +307,19 @@ export const MaterialDetailPage: React.FC = () => {
                 ) : (
                   <>
                     <Link
-                      to={`/request/${listing.id}`}
-                      className="w-full sm:flex-1 py-4 rounded-xl text-center font-bold text-sm bg-emerald-600 hover:bg-emerald-500 text-white transition-all shadow-md flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-[0.98]"
+                      to={`/messages?sellerId=${listing.sellerId || listing.seller?.id}&materialId=${listing.id}`}
+                      className="w-full sm:flex-1 py-4 rounded-xl text-center font-bold text-sm bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white transition-all shadow-md flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-[0.98]"
                     >
-                      <span>Request Purchase / Make Offer</span>
-                      <ArrowRight className="w-4 h-4" />
+                      <MessageSquare className="w-4 h-4" />
+                      <span>Chat with Seller</span>
                     </Link>
 
                     <Link
-                      to={`/messages?recipient=${listing.sellerId}`}
-                      className="w-full sm:w-auto px-6 py-4 rounded-xl text-center font-bold text-sm bg-emerald-50 dark:bg-ecoDark-card hover:bg-emerald-100 dark:hover:bg-ecoDark-hover text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30 transition-colors"
+                      to={`/request/${listing.id}`}
+                      className="w-full sm:w-auto px-6 py-4 rounded-xl text-center font-bold text-sm bg-slate-100 dark:bg-ecoDark-card hover:bg-slate-200 dark:hover:bg-ecoDark-hover text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-emerald-500/30 transition-colors flex items-center justify-center gap-2"
                     >
-                      Inquire with Seller
+                      <span>Submit Purchase Offer</span>
+                      <ArrowRight className="w-4 h-4 text-emerald-600" />
                     </Link>
                   </>
                 )}

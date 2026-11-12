@@ -3,11 +3,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { MaterialRequest, Order } from '../types';
 import { useAuth } from '../context/AuthContext';
-import { useInterfaceMode } from '../context/InterfaceModeContext';
 import { getCategoryFallbackImage, getListingPrimaryImage } from '../utils/categoryImages';
 import {
   ShoppingCart,
-  Store,
   Clock,
   Package,
   TrendingDown,
@@ -20,13 +18,13 @@ import {
   Building2,
   Tag,
   CheckCircle2,
+  Heart,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export const BuyerDashboardPage: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { switchToSeller } = useInterfaceMode();
 
   const [requests, setRequests] = useState<MaterialRequest[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -59,41 +57,41 @@ export const BuyerDashboardPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#F8FAF9] dark:bg-ecoDark-bg py-8 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
       <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header & Interface Switcher Banner */}
+        {/* Header & Quick Action Banner */}
         <div className="bg-white dark:bg-ecoDark-surface rounded-3xl p-6 sm:p-8 border border-emerald-100/80 dark:border-emerald-500/20 shadow-card flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-500/30">
                 <ShoppingCart className="w-3.5 h-3.5" />
-                Buyer Procurement Interface
+                Buyer Procurement Hub
               </span>
               <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">•</span>
               <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">{user?.businessName}</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-              Buyer Procurement Hub
+              Buyer Procurement Dashboard
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-xl">
-              Source verified industrial surplus, manage formal purchase bids, track inbound shipments, and monitor virgin-material cost savings.
+              Source verified industrial surplus, manage purchase bids, track inbound shipments, and monitor virgin-material cost savings.
             </p>
           </div>
 
-          {/* Quick Interface Toggle to Seller View */}
-          <div className="bg-slate-50 dark:bg-ecoDark-card p-4 rounded-2xl border border-slate-200/80 dark:border-emerald-900/40 flex flex-col sm:flex-row items-center gap-3 shrink-0">
-            <div className="text-left">
-              <div className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                <Store className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                <span>Have Surplus Waste to Sell?</span>
-              </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">List materials &amp; receive bids from verified buyers.</p>
-            </div>
-            <button
-              onClick={switchToSeller}
-              className="w-full sm:w-auto px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 dark:bg-emerald-600 hover:bg-emerald-700 text-white transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
+          {/* Quick Buyer Shortcuts */}
+          <div className="flex flex-col sm:flex-row items-center gap-2.5 shrink-0">
+            <Link
+              to="/buyer/wishlist"
+              className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold bg-white dark:bg-ecoDark-card text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-emerald-800/40 hover:bg-slate-50 transition-all shadow-2xs flex items-center justify-center gap-2"
             >
-              <span>Switch to Seller Hub</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
+              <Heart className="w-4 h-4 text-rose-500 fill-rose-500" />
+              <span>Saved Wishlist</span>
+            </Link>
+            <Link
+              to="/marketplace"
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-bold bg-forest-900 dark:bg-emerald-600 hover:bg-forest-800 dark:hover:bg-emerald-500 text-white transition-all shadow-md flex items-center justify-center gap-2 whitespace-nowrap"
+            >
+              <Search className="w-4 h-4" />
+              <span>Browse Marketplace</span>
+            </Link>
           </div>
         </div>
 
