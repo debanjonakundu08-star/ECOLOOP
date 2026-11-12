@@ -7,7 +7,6 @@ import fs from 'fs';
 import { authRouter } from './routes/auth.routes.js';
 import { profileRouter } from './routes/profile.routes.js';
 import { materialsRouter } from './routes/materials.routes.js';
-import { matchingRouter } from './routes/matching.routes.js';
 import { requestsRouter } from './routes/requests.routes.js';
 import { messagesRouter } from './routes/messages.routes.js';
 import { ordersRouter } from './routes/orders.routes.js';
@@ -62,7 +61,6 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', authRouter);
 app.use('/api/profile', profileRouter);
 app.use('/api/materials', materialsRouter);
-app.use('/api/matching', matchingRouter);
 app.use('/api/requests', requestsRouter);
 app.use('/api/messages', messagesRouter);
 app.use('/api/orders', ordersRouter);

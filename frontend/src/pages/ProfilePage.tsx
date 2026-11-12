@@ -84,7 +84,7 @@ export const ProfilePage: React.FC = () => {
       await api.profile.updateMe(formData);
       await refreshUser();
       setIsEditing(false);
-      setSuccessMsg('Business profile and AI procurement preferences updated successfully!');
+      setSuccessMsg('Business profile and sourcing preferences updated successfully!');
       setTimeout(() => setSuccessMsg(''), 4000);
     } catch (err: any) {
       alert(err.message || 'Failed to update profile.');
@@ -303,16 +303,16 @@ export const ProfilePage: React.FC = () => {
               </div>
             </div>
 
-            {/* AI Smart Matching Preferences */}
+            {/* Sourcing & Procurement Preferences */}
             <div className="pt-4 border-t border-slate-100 dark:border-emerald-950/60 space-y-4">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
-                  AI Matching & Procurement Preferences
+                  Sourcing & Procurement Preferences
                 </h3>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                These parameters guide EcoLoop's deterministic matching algorithm to prioritize relevant material lots on your marketplace view.
+                Record your preferred categories, sourcing cities, and target budget for your business profile.
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

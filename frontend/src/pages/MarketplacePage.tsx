@@ -10,7 +10,6 @@ import {
   Filter,
   SlidersHorizontal,
   X,
-  Sparkles,
   RefreshCw,
   PackageX,
   MapPin,
@@ -32,7 +31,7 @@ export const MarketplacePage: React.FC = () => {
   const [condition, setCondition] = useState(searchParams.get('condition') || 'All');
   const [minPrice, setMinPrice] = useState(searchParams.get('minPrice') || '');
   const [maxPrice, setMaxPrice] = useState(searchParams.get('maxPrice') || '');
-  const [sort, setSort] = useState(searchParams.get('sort') || (user ? 'match' : 'newest'));
+  const [sort, setSort] = useState(searchParams.get('sort') || 'newest');
 
   const categories = [
     'All',
@@ -88,7 +87,7 @@ export const MarketplacePage: React.FC = () => {
     const cond = searchParams.get('condition') || 'All';
     const minP = searchParams.get('minPrice') || '';
     const maxP = searchParams.get('maxPrice') || '';
-    const srt = searchParams.get('sort') || (user ? 'match' : 'newest');
+    const srt = searchParams.get('sort') || 'newest';
 
     setSearch(s);
     setCategory(cat);
@@ -146,12 +145,6 @@ export const MarketplacePage: React.FC = () => {
                 <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
                   Live Exchange
                 </span>
-                {user && (
-                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-teal-50 dark:bg-teal-950/80 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800/60">
-                    <Sparkles className="w-3.5 h-3.5 text-teal-500" />
-                    AI Synergy Enabled
-                  </span>
-                )}
               </div>
               <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-2 tracking-tight">
                 Secondary Material Marketplace
@@ -306,7 +299,6 @@ export const MarketplacePage: React.FC = () => {
                   onChange={(e) => setSort(e.target.value)}
                   className="px-3 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-emerald-900/60 bg-slate-50 dark:bg-ecoDark-card text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none"
                 >
-                  {user && <option value="match">✨ Highest AI Synergy</option>}
                   <option value="newest">Newest Listed</option>
                   <option value="price_asc">Price: Low to High</option>
                   <option value="price_desc">Price: High to Low</option>

@@ -171,7 +171,7 @@ export const Navbar: React.FC = () => {
                   }`}
                 >
                   <LayoutDashboard className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                  <span>Seller Hub</span>
+                  <span>Business Hub</span>
                 </Link>
 
                 <Link
@@ -342,7 +342,7 @@ export const Navbar: React.FC = () => {
                           className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-ecoDark-surface hover:text-emerald-600 dark:hover:text-emerald-400"
                         >
                           <LayoutDashboard className="w-4 h-4 text-slate-400" />
-                          <span>Seller Dashboard</span>
+                          <span>My Listings & Hub</span>
                         </Link>
 
                         <Link
@@ -351,7 +351,7 @@ export const Navbar: React.FC = () => {
                           className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-ecoDark-surface hover:text-emerald-600 dark:hover:text-emerald-400"
                         >
                           <Sparkles className="w-4 h-4 text-slate-400" />
-                          <span>Purchase Requests</span>
+                          <span>Incoming Requests</span>
                         </Link>
 
                         <Link
@@ -445,13 +445,13 @@ export const Navbar: React.FC = () => {
                   to="/seller/dashboard"
                   className="block px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-ecoDark-surface"
                 >
-                  Seller Dashboard
+                  Business Hub (My Listings)
                 </Link>
                 <Link
                   to="/seller/requests"
                   className="block px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-ecoDark-surface"
                 >
-                  Buyer Requests
+                  Incoming Requests
                 </Link>
                 <Link
                   to="/orders"

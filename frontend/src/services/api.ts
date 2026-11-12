@@ -8,12 +8,25 @@ import {
   Payment,
   ImpactSummary,
   Notification,
-  MatchResult,
 } from '../types';
 
-import { MOCK_LISTINGS, MOCK_USERS, MOCK_IMPACT, MOCK_MATCH } from './mockData';
+import { MOCK_LISTINGS, MOCK_USERS, MOCK_IMPACT } from './mockData';
 
 const BASE_URL = '/api';
+
+function getMockUser(): User | null {
+  try {
+    const token = localStorage.getItem('ecoloop_token');
+    const savedUser = localStorage.getItem('ecoloop_mock_user');
+    if (savedUser) {
+      return JSON.parse(savedUser) as User;
+    }
+    if (token === 'mock_demo_token') {
+      return MOCK_USERS[0];
+    }
+  } catch {}
+  return null;
+}
 
 // In-memory / localStorage cache for mock state and user-customized listings
 function getLocalListings(): MaterialListing[] {
@@ -61,6 +74,11 @@ function getMockFallback<T>(url: string, options: RequestInit = {}): T | null {
 
   if (cleanUrl.startsWith('/materials/') && (method === 'PUT' || method === 'PATCH')) {
     const id = cleanUrl.replace('/materials/', '');
+    const currentUser = getMockUser();
+    const existing = allListings.find(m => m.id === id);
+    if (!currentUser || !existing || existing.sellerId !== currentUser.id) {
+      throw new Error('Only the business that listed this item can edit it.');
+    }
     const body = options.body ? JSON.parse(options.body as string) : {};
     try {
       const editedMap = JSON.parse(localStorage.getItem('ecoloop_edited_listings') || '{}');
@@ -70,16 +88,21 @@ function getMockFallback<T>(url: string, options: RequestInit = {}): T | null {
       };
       localStorage.setItem('ecoloop_edited_listings', JSON.stringify(editedMap));
     } catch {}
-    const updated = getLocalListings().find(m => m.id === id) || allListings[0];
+    const updated = getLocalListings().find(m => m.id === id) || existing;
     return { message: 'Listing updated successfully', listing: updated } as unknown as T;
   }
 
   if (cleanUrl === '/materials' && method === 'POST') {
+    const currentUser = getMockUser();
+    if (!currentUser) {
+      throw new Error('Please log in to list waste materials.');
+    }
     const body = options.body ? JSON.parse(options.body as string) : {};
-    const sellerCompanyName = body.companyName || body.businessName || 'Your Enterprise';
+    const sellerCompanyName = body.companyName || body.businessName || currentUser.businessName || 'Your Enterprise';
+    const listingId = 'custom-' + Date.now();
     const newListing: MaterialListing = {
-      id: 'custom-' + Date.now(),
-      sellerId: '02f3d16e-3819-4dcf-8149-2b5d5e5b6101',
+      id: listingId,
+      sellerId: currentUser.id,
       title: body.title || 'Custom Listed Lot',
       description: body.description || 'Pre-inspected surplus material batch',
       category: body.category || 'Paper/Cardboard',
@@ -88,21 +111,21 @@ function getMockFallback<T>(url: string, options: RequestInit = {}): T | null {
       pricePerUnit: parseFloat(body.pricePerUnit) || 12.5,
       minOrderQuantity: parseFloat(body.minOrderQuantity) || 50,
       condition: body.condition || 'Clean / High Grade',
-      locationCity: body.locationCity || 'Kolkata',
-      locationAddress: body.locationAddress || 'Sector V, Salt Lake',
+      locationCity: body.locationCity || currentUser.city || 'Kolkata',
+      locationAddress: body.locationAddress || currentUser.address || 'Sector V, Salt Lake',
       availability: body.availability || 'Immediate',
       status: 'ACTIVE',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       seller: {
-        id: MOCK_USERS[0].id,
+        id: currentUser.id,
         businessName: sellerCompanyName,
-        city: body.locationCity || MOCK_USERS[0].city,
-        category: body.category || MOCK_USERS[0].category,
-        address: body.locationAddress || MOCK_USERS[0].address,
-        bio: 'Verified supplier on EcoLoop',
+        city: body.locationCity || currentUser.city,
+        category: body.category || currentUser.category,
+        address: body.locationAddress || currentUser.address,
+        bio: currentUser.bio || 'Verified business on EcoLoop',
         isVerified: true,
-        phone: '+91 98301 22334',
+        phone: currentUser.phone || '+91 98301 22334',
         _count: {
           listings: 1,
           sellerOrders: 0,
@@ -111,7 +134,7 @@ function getMockFallback<T>(url: string, options: RequestInit = {}): T | null {
       images: [
         {
           id: 'img-' + Date.now(),
-          listingId: 'custom-' + Date.now(),
+          listingId,
           url: body.imageUrl || body.images?.[0] || 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80',
           isPrimary: true,
         }
@@ -129,13 +152,14 @@ function getMockFallback<T>(url: string, options: RequestInit = {}): T | null {
     const found = allListings.find(m => m.id === id) || allListings[0];
     return {
       listing: found,
-      aiMatch: MOCK_MATCH,
       related: allListings.filter(m => m.id !== found.id).slice(0, 3),
     } as unknown as T;
   }
 
   if (cleanUrl === '/materials/seller/my-listings' && method === 'GET') {
-    return { listings: allListings.slice(0, 4) } as unknown as T;
+    const currentUser = getMockUser();
+    const myListings = currentUser ? allListings.filter(m => m.sellerId === currentUser.id) : [];
+    return { listings: myListings } as unknown as T;
   }
 
   if (cleanUrl === '/impact/summary') {
@@ -143,33 +167,98 @@ function getMockFallback<T>(url: string, options: RequestInit = {}): T | null {
   }
 
   if (cleanUrl === '/auth/me') {
-    const savedRole = localStorage.getItem('ecoloop_user_role') || 'SELLER';
-    const user = savedRole === 'BUYER' ? MOCK_USERS[1] : MOCK_USERS[0];
-    return { user } as unknown as T;
+    return { user: getMockUser() } as unknown as T;
   }
 
-  if (cleanUrl === '/auth/login' || cleanUrl === '/auth/signup') {
-    return { message: 'Logged in successfully', token: 'mock_demo_token', user: MOCK_USERS[0] } as unknown as T;
+  if (cleanUrl === '/auth/login') {
+    const body = options.body ? JSON.parse(options.body as string) : {};
+    const email = (body.email || '').toLowerCase().trim();
+    let registered: User[] = [];
+    try {
+      registered = JSON.parse(localStorage.getItem('ecoloop_registered_users') || '[]');
+    } catch {}
+    let user = registered.find(u => u.email.toLowerCase() === email);
+    if (!user) {
+      if (email === 'purchase@greentechpolymers.in' || email === 'buyer@ecoloop.com') {
+        user = MOCK_USERS[1];
+      } else if (email === 'greenpack@ecoloop.com' || email === 'seller@ecoloop.com' || email === 'packaging@bengaleco.in') {
+        user = MOCK_USERS[0];
+      } else if (email) {
+        // Fallback persistent business account derived from email so any new login gets its own identity
+        user = {
+          id: 'usr_' + email.replace(/[^a-z0-9]/g, '_'),
+          businessName: email.split('@')[0].replace(/[^a-zA-Z0-9 ]/g, ' ').toUpperCase(),
+          email,
+          phone: '+91 98300 00000',
+          city: 'Kolkata',
+          category: 'Packaging materials',
+          isVerified: true,
+          createdAt: new Date().toISOString(),
+        };
+        try {
+          localStorage.setItem('ecoloop_registered_users', JSON.stringify([...registered, user]));
+        } catch {}
+      } else {
+        throw new Error('Please enter your business email and password.');
+      }
+    }
+    const token = 'mock_token_' + user.id;
+    try {
+      localStorage.setItem('ecoloop_mock_user', JSON.stringify(user));
+      localStorage.setItem('ecoloop_token', token);
+    } catch {}
+    return { message: 'Logged in successfully', token, user } as unknown as T;
+  }
+
+  if (cleanUrl === '/auth/signup') {
+    const body = options.body ? JSON.parse(options.body as string) : {};
+    if (body.password && body.confirmPassword && body.password !== body.confirmPassword) {
+      throw new Error('Passwords do not match.');
+    }
+    const email = (body.email || '').toLowerCase().trim();
+    let registered: User[] = [];
+    try {
+      registered = JSON.parse(localStorage.getItem('ecoloop_registered_users') || '[]');
+    } catch {}
+    const existing = registered.find(u => u.email.toLowerCase() === email) ||
+      MOCK_USERS.find(u => u.email.toLowerCase() === email);
+    if (existing) {
+      throw new Error('A business with this email already exists.');
+    }
+    const newUser: User = {
+      id: 'usr_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+      businessName: body.businessName?.trim() || 'EcoLoop Enterprise',
+      email,
+      contactPerson: body.contactPerson?.trim() || undefined,
+      phone: body.phone?.trim() || '+91 98300 00000',
+      city: body.city || 'Kolkata',
+      address: body.address?.trim() || undefined,
+      category: body.category || 'Packaging materials',
+      bio: body.bio?.trim() || undefined,
+      isVerified: true,
+      createdAt: new Date().toISOString(),
+    };
+    const token = 'mock_token_' + newUser.id;
+    try {
+      localStorage.setItem('ecoloop_registered_users', JSON.stringify([...registered, newUser]));
+      localStorage.setItem('ecoloop_mock_user', JSON.stringify(newUser));
+      localStorage.setItem('ecoloop_token', token);
+    } catch {}
+    return { message: 'Account registered successfully', token, user: newUser } as unknown as T;
   }
 
   if (cleanUrl === '/seller/dashboard') {
+    const currentUser = getMockUser();
+    const myListings = currentUser ? allListings.filter(m => m.sellerId === currentUser.id) : [];
     return {
-      kpis: { activeListings: allListings.length, pendingRequests: 3, completedSales: 42, totalRevenue: 680000 },
+      kpis: { activeListings: myListings.length, pendingRequests: 0, completedSales: 0, totalRevenue: 0 },
       recentRequests: [],
-      myListings: allListings.slice(0, 3),
+      myListings,
       recentOrders: [],
       analytics: {
         monthlySales: MOCK_IMPACT.monthlyTrends.map(m => ({ month: m.month, revenue: m.weightKg * 20, orders: m.transactions })),
         categoryBreakdown: MOCK_IMPACT.categoryBreakdown.map(c => ({ name: c.category, value: c.weightKg })),
       },
-    } as unknown as T;
-  }
-
-  if (cleanUrl === '/matching/recommendations') {
-    return {
-      recommendations: allListings,
-      totalMatches: allListings.length,
-      buyerContext: { city: 'Kolkata' },
     } as unknown as T;
   }
 
@@ -344,6 +433,11 @@ async function fetchJson<T>(url: string, options: RequestInit = {}): Promise<T> 
     const data = await response.json().catch(() => null);
 
     if (!response.ok || !data) {
+      if (response.status === 400 || response.status === 401 || response.status === 403) {
+        const apiErr = new Error(data?.error || data?.message || `Request failed with status ${response.status}`);
+        (apiErr as any).isApiError = true;
+        throw apiErr;
+      }
       const fallback = getMockFallback<T>(url, options);
       if (fallback !== null) return fallback;
       throw new Error(data?.error || data?.message || `Request failed with status ${response.status}`);
@@ -351,6 +445,7 @@ async function fetchJson<T>(url: string, options: RequestInit = {}): Promise<T> 
 
     return data as T;
   } catch (err: any) {
+    if (err?.isApiError) throw err;
     const fallback = getMockFallback<T>(url, options);
     if (fallback !== null) return fallback;
     throw err;
@@ -370,11 +465,11 @@ export const api = {
     logout: () => fetchJson<{ message: string }>('/auth/logout', { method: 'POST' }),
     me: async () => {
       try {
-        const res = await fetchJson<{ user: User }>('/auth/me');
+        const res = await fetchJson<{ user: User | null }>('/auth/me');
         if (res && res.user) return res;
-        return { user: MOCK_USERS[0] };
+        return { user: getMockUser() };
       } catch {
-        return { user: MOCK_USERS[0] };
+        return { user: getMockUser() };
       }
     },
   },
@@ -416,15 +511,15 @@ export const api = {
     },
     getById: async (id: string) => {
       try {
-        const res = await fetchJson<{ listing: MaterialListing; aiMatch: MatchResult | null; related: MaterialListing[] }>(`/materials/${id}`);
+        const res = await fetchJson<{ listing: MaterialListing; related: MaterialListing[] }>(`/materials/${id}`);
         if (res && res.listing) return res;
         const all = getLocalListings();
         const found = all.find(m => m.id === id) || all[0];
-        return { listing: found, aiMatch: MOCK_MATCH, related: all.slice(1, 4) };
+        return { listing: found, related: all.filter(m => m.id !== found.id).slice(0, 3) };
       } catch {
         const all = getLocalListings();
         const found = all.find(m => m.id === id) || all[0];
-        return { listing: found, aiMatch: MOCK_MATCH, related: all.slice(1, 4) };
+        return { listing: found, related: all.filter(m => m.id !== found.id).slice(0, 3) };
       }
     },
     getMyListings: () => fetchJson<{ listings: MaterialListing[] }>('/materials/seller/my-listings'),
@@ -437,22 +532,6 @@ export const api = {
       body: JSON.stringify(body),
     }),
     delete: (id: string) => fetchJson<{ message: string }>(`/materials/${id}`, { method: 'DELETE' }),
-  },
-
-  matching: {
-    getRecommendations: async () => {
-      try {
-        const res = await fetchJson<{ recommendations: MaterialListing[]; totalMatches: number; buyerContext: any }>('/matching/recommendations');
-        if (res && Array.isArray(res.recommendations)) return res;
-        const all = getLocalListings();
-        return { recommendations: all, totalMatches: all.length, buyerContext: { city: 'Kolkata' } };
-      } catch {
-        const all = getLocalListings();
-        return { recommendations: all, totalMatches: all.length, buyerContext: { city: 'Kolkata' } };
-      }
-    },
-    getMaterialMatch: (id: string) => fetchJson<{ match: MatchResult }>(`/matching/material/${id}`),
-    getBuyersForListing: (listingId: string) => fetchJson<{ matchedBuyers: Array<{ buyer: User; aiMatch: MatchResult }> }>(`/matching/buyers-for-listing/${listingId}`),
   },
 
   requests: {

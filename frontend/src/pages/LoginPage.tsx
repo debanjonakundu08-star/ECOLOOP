@@ -17,11 +17,8 @@ export const LoginPage: React.FC = () => {
   // Auto-fill if demo parameter present
   useEffect(() => {
     const demo = searchParams.get('demo');
-    if (demo === 'seller') {
-      setEmail('seller@ecoloop.com');
-      setPassword('ecoloop123');
-    } else if (demo === 'buyer') {
-      setEmail('buyer@ecoloop.com');
+    if (demo) {
+      setEmail('greenpack@ecoloop.com');
       setPassword('ecoloop123');
     }
   }, [searchParams]);
@@ -41,14 +38,9 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const fillDemo = (role: 'seller' | 'buyer') => {
-    if (role === 'seller') {
-      setEmail('seller@ecoloop.com');
-      setPassword('ecoloop123');
-    } else {
-      setEmail('buyer@ecoloop.com');
-      setPassword('ecoloop123');
-    }
+  const fillDemo = () => {
+    setEmail('greenpack@ecoloop.com');
+    setPassword('ecoloop123');
     setError('');
   };
 
@@ -73,34 +65,29 @@ export const LoginPage: React.FC = () => {
             Sign in to EcoLoop
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Access your B2B circular economy marketplace dashboard
+            One unified business account to both buy &amp; sell circular materials
           </p>
         </div>
 
-        {/* Demo Quick-Login Buttons */}
+        {/* Demo Quick-Login Button */}
         <div className="bg-emerald-50/70 dark:bg-ecoDark-card/70 p-3.5 rounded-2xl border border-emerald-100 dark:border-emerald-500/20 space-y-2">
           <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-900 dark:text-emerald-300">
             <Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-            <span>Instant Demo Logins:</span>
+            <span>Instant Demo Business Account:</span>
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => fillDemo('seller')}
-              className="py-2 px-2.5 rounded-xl text-left bg-white dark:bg-ecoDark-surface border border-emerald-200 dark:border-emerald-500/30 hover:border-emerald-400 dark:hover:border-emerald-400 text-[11px] font-semibold text-slate-700 dark:text-slate-200 transition-colors shadow-2xs hover:shadow-xs"
-            >
-              <div className="font-bold text-emerald-800 dark:text-emerald-400">Demo Seller</div>
-              <div className="text-slate-400 dark:text-slate-400 text-[10px] truncate">GreenPack (Kolkata)</div>
-            </button>
-            <button
-              type="button"
-              onClick={() => fillDemo('buyer')}
-              className="py-2 px-2.5 rounded-xl text-left bg-white dark:bg-ecoDark-surface border border-emerald-200 dark:border-emerald-500/30 hover:border-emerald-400 dark:hover:border-emerald-400 text-[11px] font-semibold text-slate-700 dark:text-slate-200 transition-colors shadow-2xs hover:shadow-xs"
-            >
-              <div className="font-bold text-teal-800 dark:text-teal-400">Demo Buyer</div>
-              <div className="text-slate-400 dark:text-slate-400 text-[10px] truncate">EcoRecycle (Howrah)</div>
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={fillDemo}
+            className="w-full py-2.5 px-3 rounded-xl text-left bg-white dark:bg-ecoDark-surface border border-emerald-200 dark:border-emerald-500/30 hover:border-emerald-400 dark:hover:border-emerald-400 text-[11px] font-semibold text-slate-700 dark:text-slate-200 transition-colors shadow-2xs hover:shadow-xs flex items-center justify-between"
+          >
+            <div>
+              <div className="font-bold text-emerald-800 dark:text-emerald-400">Bengal Eco Packaging Ltd (Kolkata)</div>
+              <div className="text-slate-400 dark:text-slate-400 text-[10px]">Buy from other businesses &amp; manage your own listings</div>
+            </div>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300">
+              Fill Demo
+            </span>
+          </button>
         </div>
 
         {/* Error Alert */}

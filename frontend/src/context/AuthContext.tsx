@@ -72,6 +72,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Ignore error on logout
     } finally {
       localStorage.removeItem('ecoloop_token');
+      localStorage.removeItem('ecoloop_mock_user');
+      localStorage.removeItem('ecoloop_user_role');
       setUser(null);
     }
   };

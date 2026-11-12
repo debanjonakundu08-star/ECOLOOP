@@ -2,8 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { api } from '../services/api';
-import { MaterialListing, MatchResult } from '../types';
-import { MatchScoreBadge } from '../components/MatchScoreBadge';
+import { MaterialListing } from '../types';
 import { MarketplaceCard } from '../components/MarketplaceCard';
 import { EditListingModal } from '../components/EditListingModal';
 import { useAuth } from '../context/AuthContext';
@@ -13,10 +12,8 @@ import {
   ArrowRight,
   ShieldCheck,
   Calendar,
-  Sparkles,
   ArrowLeft,
   Camera,
-  Edit3,
 } from 'lucide-react';
 
 export const MaterialDetailPage: React.FC = () => {
@@ -25,7 +22,6 @@ export const MaterialDetailPage: React.FC = () => {
   const { user } = useAuth();
 
   const [listing, setListing] = useState<MaterialListing | null>(null);
-  const [aiMatch, setAiMatch] = useState<MatchResult | null>(null);
   const [related, setRelated] = useState<MaterialListing[]>([]);
   const [selectedImage, setSelectedImage] = useState<string>('');
   const [isSaved, setIsSaved] = useState(false);
@@ -40,7 +36,6 @@ export const MaterialDetailPage: React.FC = () => {
         const res = await api.materials.getById(id);
         if (res && res.listing) {
           setListing(res.listing);
-          setAiMatch(res.aiMatch || null);
           setRelated(Array.isArray(res.related) ? res.related : []);
           const isMetal = res.listing.category === 'Metal' || res.listing.title?.toLowerCase().includes('steel');
           const defaultFallback = isMetal
@@ -117,14 +112,16 @@ export const MaterialDetailPage: React.FC = () => {
             <span>Back</span>
           </button>
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => setIsEditOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-ecoDark-card border border-emerald-500/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 shadow-sm transition-all"
-              title="Edit company name or change photo"
-            >
-              <Camera className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-              <span>Edit Listing / Upload Photo</span>
-            </button>
+            {isSellerOwner && (
+              <button
+                onClick={() => setIsEditOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-ecoDark-card border border-emerald-500/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 shadow-sm transition-all"
+                title="Edit company name or change photo"
+              >
+                <Camera className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span>Edit Listing / Upload Photo</span>
+              </button>
+            )}
             <div className="flex items-center gap-2">
               <Link to="/marketplace" className="hover:text-slate-800 dark:hover:text-white">Marketplace</Link>
               <span>/</span>
@@ -300,12 +297,23 @@ export const MaterialDetailPage: React.FC = () => {
               {/* Action Buttons */}
               <div className="pt-6 border-t border-slate-100 dark:border-emerald-950/60 flex flex-col sm:flex-row items-center gap-3">
                 {isSellerOwner ? (
-                  <Link
-                    to="/seller/dashboard"
-                    className="w-full py-3.5 rounded-xl text-center font-bold text-sm bg-slate-100 dark:bg-ecoDark-card hover:bg-slate-200 dark:hover:bg-ecoDark-hover text-slate-800 dark:text-white transition-colors"
-                  >
-                    Manage This Listing in Seller Hub
-                  </Link>
+                  <>
+                    <Link
+                      to="/seller/dashboard"
+                      className="w-full sm:flex-1 py-3.5 rounded-xl text-center font-bold text-sm bg-slate-100 dark:bg-ecoDark-card hover:bg-slate-200 dark:hover:bg-ecoDark-hover text-slate-800 dark:text-white transition-colors"
+                    >
+                      Manage This Listing in Business Hub
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => setIsEditOpen(true)}
+                      className="w-full sm:w-auto px-5 py-3.5 rounded-xl text-center font-bold text-sm bg-emerald-50 dark:bg-ecoDark-card hover:bg-emerald-100 dark:hover:bg-ecoDark-hover text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30 transition-colors flex items-center justify-center gap-2"
+                      title="Edit company name or change photo"
+                    >
+                      <Camera className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                      <span>Edit Listing / Upload Photo</span>
+                    </button>
+                  </>
                 ) : (
                   <>
                     <Link
@@ -322,35 +330,12 @@ export const MaterialDetailPage: React.FC = () => {
                     >
                       Inquire with Seller
                     </Link>
-
-                    <button
-                      type="button"
-                      onClick={() => setIsEditOpen(true)}
-                      className="w-full sm:w-auto px-5 py-4 rounded-xl text-center font-bold text-sm bg-slate-100 dark:bg-ecoDark-card hover:bg-slate-200 dark:hover:bg-ecoDark-hover text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-emerald-900/60 transition-colors flex items-center justify-center gap-2"
-                      title="Edit company name or change photo"
-                    >
-                      <Camera className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                      <span>Edit Listing / Upload Photo</span>
-                    </button>
                   </>
                 )}
               </div>
             </div>
           </div>
         </motion.div>
-
-        {/* AI Circular Compatibility Breakdown Section */}
-        {aiMatch && (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-                EcoLoop Smart Match Compatibility Analysis
-              </h2>
-            </div>
-            <MatchScoreBadge match={aiMatch} compact={false} />
-          </div>
-        )}
 
         {/* Related Materials Section */}
         {related && related.length > 0 && (
@@ -367,7 +352,7 @@ export const MaterialDetailPage: React.FC = () => {
         )}
       </div>
 
-      {listing && (
+      {listing && isSellerOwner && (
         <EditListingModal
           listing={listing}
           isOpen={isEditOpen}

@@ -1,12 +1,11 @@
 import { Router, Response } from 'express';
 import { prisma } from '../prisma.js';
-import { requireAuth, optionalAuth, AuthRequest } from '../middleware/auth.js';
-import { calculateMatchScore } from '../services/matchingEngine.js';
+import { requireAuth, AuthRequest } from '../middleware/auth.js';
 
 export const materialsRouter = Router();
 
-// GET all materials with filters, search, and optional AI match scoring
-materialsRouter.get('/', optionalAuth, async (req: AuthRequest, res: Response): Promise<void> => {
+// GET all materials with filters and search
+materialsRouter.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const {
       search,
@@ -73,40 +72,9 @@ materialsRouter.get('/', optionalAuth, async (req: AuthRequest, res: Response): 
       },
     });
 
-    // If user is logged in, augment with AI match calculation
-    let enrichedListings = listings as any[];
-    if (req.user) {
-      const buyerPref = await prisma.buyerPreference.findUnique({
-        where: { userId: req.user.id },
-      });
-
-      const buyerData = {
-        id: req.user.id,
-        businessName: req.user.businessName,
-        category: req.user.category,
-        city: req.user.city,
-        preferredCategories: buyerPref?.preferredCategories ? buyerPref.preferredCategories.split(',').filter(Boolean) : [],
-        preferredCities: buyerPref?.preferredCities ? buyerPref.preferredCities.split(',').filter(Boolean) : [req.user.city],
-        maxBudget: buyerPref?.maxBudget ?? null,
-        typicalQuantity: buyerPref?.typicalQuantity ?? null,
-      };
-
-      enrichedListings = listings.map((item) => {
-        const match = calculateMatchScore(buyerData, item);
-        return {
-          ...item,
-          aiMatch: match,
-        };
-      });
-
-      if (sort === 'match') {
-        enrichedListings.sort((a, b) => (b.aiMatch?.matchPercentage || 0) - (a.aiMatch?.matchPercentage || 0));
-      }
-    }
-
     res.json({
-      listings: enrichedListings,
-      total: enrichedListings.length,
+      listings,
+      total: listings.length,
     });
   } catch (error) {
     console.error('Fetch materials error:', error);
@@ -138,7 +106,7 @@ materialsRouter.get('/seller/my-listings', requireAuth, async (req: AuthRequest,
 });
 
 // GET single material details
-materialsRouter.get('/:id', optionalAuth, async (req: AuthRequest, res: Response): Promise<void> => {
+materialsRouter.get('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const listing = await prisma.materialListing.findUnique({
       where: { id: req.params.id },
@@ -167,26 +135,6 @@ materialsRouter.get('/:id', optionalAuth, async (req: AuthRequest, res: Response
       return;
     }
 
-    let aiMatch = null;
-    if (req.user) {
-      const buyerPref = await prisma.buyerPreference.findUnique({
-        where: { userId: req.user.id },
-      });
-
-      const buyerData = {
-        id: req.user.id,
-        businessName: req.user.businessName,
-        category: req.user.category,
-        city: req.user.city,
-        preferredCategories: buyerPref?.preferredCategories ? buyerPref.preferredCategories.split(',').filter(Boolean) : [],
-        preferredCities: buyerPref?.preferredCities ? buyerPref.preferredCities.split(',').filter(Boolean) : [req.user.city],
-        maxBudget: buyerPref?.maxBudget ?? null,
-        typicalQuantity: buyerPref?.typicalQuantity ?? null,
-      };
-
-      aiMatch = calculateMatchScore(buyerData, listing);
-    }
-
     // Also fetch 3 related materials in the same or complementary category
     const related = await prisma.materialListing.findMany({
       where: {
@@ -200,7 +148,6 @@ materialsRouter.get('/:id', optionalAuth, async (req: AuthRequest, res: Response
 
     res.json({
       listing,
-      aiMatch,
       related,
     });
   } catch (error) {
@@ -294,12 +241,17 @@ materialsRouter.post('/', requireAuth, async (req: AuthRequest, res: Response): 
   }
 });
 
-// PUT update listing
-materialsRouter.put('/:id', optionalAuth, async (req: AuthRequest, res: Response): Promise<void> => {
+// PUT update listing (owner only)
+materialsRouter.put('/:id', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const existing = await prisma.materialListing.findUnique({ where: { id: req.params.id } });
     if (!existing) {
       res.status(404).json({ error: 'Listing not found.' });
+      return;
+    }
+
+    if (existing.sellerId !== req.user!.id) {
+      res.status(403).json({ error: 'Only the business that listed this item can edit it.' });
       return;
     }
 

@@ -36,23 +36,6 @@ export interface ListingImage {
   isPrimary: boolean;
 }
 
-export interface MatchFactors {
-  categoryScore: number;
-  proximityScore: number;
-  quantityScore: number;
-  priceScore: number;
-  conditionScore: number;
-  availabilityScore: number;
-}
-
-export interface MatchResult {
-  matchPercentage: number;
-  factors: MatchFactors;
-  distanceKm: number;
-  transportationAdvice: string;
-  reasons: string[];
-}
-
 export interface MaterialListing {
   id: string;
   sellerId: string;
@@ -85,7 +68,6 @@ export interface MaterialListing {
       sellerOrders: number;
     };
   };
-  aiMatch?: MatchResult;
   _count?: {
     requests: number;
     orders: number;

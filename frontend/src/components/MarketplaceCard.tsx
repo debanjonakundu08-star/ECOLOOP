@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { MaterialListing } from '../types';
-import { MapPin, Heart, ArrowRight, ShieldCheck, Tag, Camera, Edit3 } from 'lucide-react';
-import { MatchScoreBadge } from './MatchScoreBadge';
+import { MapPin, Heart, ArrowRight, ShieldCheck, Tag, Camera } from 'lucide-react';
 import { EditListingModal } from './EditListingModal';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -20,6 +19,7 @@ export const MarketplaceCard: React.FC<MarketplaceCardProps> = ({ listing, isSav
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isSaved, setIsSaved] = useState(isSavedInitial);
   const [saving, setSaving] = useState(false);
+  const isOwner = Boolean(user && currentListing?.sellerId && user.id === currentListing.sellerId);
 
   useEffect(() => {
     setCurrentListing(listing);
@@ -123,19 +123,21 @@ const CATEGORY_FALLBACKS: Record<string, string> = {
 
           {/* Action buttons (Top Right) */}
           <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10">
-            {/* Edit / Change Photo Button */}
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setIsEditOpen(true);
-              }}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-full backdrop-blur-md bg-white/90 dark:bg-ecoDark-surface/90 hover:bg-emerald-600 hover:text-white dark:hover:bg-emerald-500 text-slate-700 dark:text-slate-200 text-xs font-semibold shadow-sm transition-all"
-              title="Edit company name or upload custom photo for this waste"
-            >
-              <Camera className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 group-hover:text-white" />
-              <span className="text-[11px] font-bold">Edit / Photo</span>
-            </button>
+            {/* Edit / Change Photo Button - Only visible to the listing owner */}
+            {isOwner && (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsEditOpen(true);
+                }}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-full backdrop-blur-md bg-white/90 dark:bg-ecoDark-surface/90 hover:bg-emerald-600 hover:text-white dark:hover:bg-emerald-500 text-slate-700 dark:text-slate-200 text-xs font-semibold shadow-sm transition-all"
+                title="Edit company name or upload custom photo for this waste"
+              >
+                <Camera className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 group-hover:text-white" />
+                <span className="text-[11px] font-bold">Edit / Photo</span>
+              </button>
+            )}
 
             {/* Save button */}
             <button
@@ -151,13 +153,6 @@ const CATEGORY_FALLBACKS: Record<string, string> = {
               <Heart className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
             </button>
           </div>
-
-          {/* AI Match Badge (if available) */}
-          {currentListing.aiMatch && (
-            <div className="absolute bottom-3 left-3">
-              <MatchScoreBadge match={currentListing.aiMatch} compact={true} />
-            </div>
-          )}
 
           {/* Condition Grade */}
           <div className="absolute bottom-3 right-3">
@@ -228,18 +223,20 @@ const CATEGORY_FALLBACKS: Record<string, string> = {
         </div>
       </motion.div>
 
-      {/* Interactive Edit Modal */}
-      <EditListingModal
-        listing={currentListing}
-        isOpen={isEditOpen}
-        onClose={() => setIsEditOpen(false)}
-        onSave={(updated) => {
-          setCurrentListing(updated);
-          if (onListingUpdated) {
-            onListingUpdated(updated);
-          }
-        }}
-      />
+      {/* Interactive Edit Modal - Owner only */}
+      {isOwner && (
+        <EditListingModal
+          listing={currentListing}
+          isOpen={isEditOpen}
+          onClose={() => setIsEditOpen(false)}
+          onSave={(updated) => {
+            setCurrentListing(updated);
+            if (onListingUpdated) {
+              onListingUpdated(updated);
+            }
+          }}
+        />
+      )}
     </>
   );
 };

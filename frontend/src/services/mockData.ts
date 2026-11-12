@@ -1,10 +1,10 @@
-import { MaterialListing, User, ImpactSummary, MatchResult } from '../types';
+import { MaterialListing, User, ImpactSummary } from '../types';
 
 export const MOCK_USERS: User[] = [
   {
     id: 'usr_seller_1',
     businessName: 'Bengal Eco Packaging Ltd',
-    email: 'packaging@bengaleco.in',
+    email: 'greenpack@ecoloop.com',
     phone: '+91 98301 22334',
     city: 'Kolkata',
     category: 'Packaging materials',
@@ -24,25 +24,6 @@ export const MOCK_USERS: User[] = [
     _count: { listings: 4, buyerOrders: 28 },
   },
 ];
-
-export const MOCK_MATCH: MatchResult = {
-  matchPercentage: 89,
-  factors: {
-    categoryScore: 30,
-    proximityScore: 19,
-    quantityScore: 15,
-    priceScore: 15,
-    conditionScore: 10,
-    availabilityScore: 10,
-  },
-  distanceKm: 14.2,
-  transportationAdvice: 'Intra-city local transport recommended (approx. 45 mins transit)',
-  reasons: [
-    'Material category directly matches buyer profile (30/30 pts)',
-    'High proximity within Kolkata-Howrah metropolitan zone (19/20 pts)',
-    'Available immediately for dispatch (10/10 pts)',
-  ],
-};
 
 export const MOCK_LISTINGS: MaterialListing[] = [
   {
@@ -72,7 +53,6 @@ export const MOCK_LISTINGS: MaterialListing[] = [
       phone: '+91 98301 22334',
       _count: { listings: 6, sellerOrders: 42 },
     },
-    aiMatch: MOCK_MATCH,
   },
   {
     id: 'mat_2',
@@ -101,7 +81,6 @@ export const MOCK_LISTINGS: MaterialListing[] = [
       phone: '+91 98310 99887',
       _count: { listings: 4, sellerOrders: 28 },
     },
-    aiMatch: MOCK_MATCH,
   },
   {
     id: 'mat_3',
@@ -130,7 +109,6 @@ export const MOCK_LISTINGS: MaterialListing[] = [
       phone: '+91 98301 22334',
       _count: { listings: 6, sellerOrders: 42 },
     },
-    aiMatch: MOCK_MATCH,
   },
   {
     id: 'mat_4',
@@ -159,7 +137,6 @@ export const MOCK_LISTINGS: MaterialListing[] = [
       phone: '+91 98310 99887',
       _count: { listings: 4, sellerOrders: 28 },
     },
-    aiMatch: MOCK_MATCH,
   },
   {
     id: 'mat_5',
@@ -188,7 +165,6 @@ export const MOCK_LISTINGS: MaterialListing[] = [
       phone: '+91 98301 22334',
       _count: { listings: 6, sellerOrders: 42 },
     },
-    aiMatch: MOCK_MATCH,
   },
   {
     id: 'mat_6',
@@ -217,7 +193,6 @@ export const MOCK_LISTINGS: MaterialListing[] = [
       phone: '+91 98301 22334',
       _count: { listings: 6, sellerOrders: 42 },
     },
-    aiMatch: MOCK_MATCH,
   },
 ];
 

@@ -158,7 +158,7 @@ export const HomePage: React.FC = () => {
               </span>
               <span className="flex items-center gap-1.5">
                 <Sparkles className="w-4 h-4 text-emerald-400" />
-                AI Proximity Matching
+                Direct Regional Sourcing
               </span>
             </div>
           </motion.div>
@@ -229,8 +229,8 @@ export const HomePage: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {[
-            { step: '01', title: 'List Excess Waste', desc: 'Sellers upload scrap specifications, weight, condition, photographs, and minimum order requirements in under 2 minutes.' },
-            { step: '02', title: 'Smart AI Matching', desc: 'Our 6-factor deterministic algorithm calculates geographic proximity, industry synergy, and budget compatibility.' },
+            { step: '01', title: 'List Excess Waste', desc: 'Businesses upload scrap specifications, weight, condition, photographs, and minimum order requirements in under 2 minutes.' },
+            { step: '02', title: 'Direct Discovery & Filtering', desc: 'Search and filter verified surplus lots by city proximity, category, pricing tier, and condition grade.' },
             { step: '03', title: 'Direct Negotiation', desc: 'Negotiate unit pricing, counter-offer terms, select freight options (Self or EcoLoop Fleet), and approve purchase orders.' },
             { step: '04', title: 'Escrow & Impact Log', desc: 'Simulated settlement triggers instant order dispatch and computes verified carbon, water, and landfill diversion records.' },
           ].map((item, idx) => (
@@ -426,22 +426,16 @@ export const HomePage: React.FC = () => {
               Ready to Test the Full Platform Flow?
             </h3>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-              Log in with our pre-configured demo accounts to test listing waste, AI match calculation, purchase negotiation, order generation, and simulated escrow payment.
+              Log in with our pre-configured business account to both list your own surplus waste materials AND purchase materials from other enterprises in one unified dashboard.
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 shrink-0 w-full md:w-auto">
             <Link
-              to="/login?demo=seller"
-              className="px-6 py-3.5 rounded-xl text-center font-bold text-xs bg-forest-900 dark:bg-emerald-700 text-white hover:bg-forest-800 dark:hover:bg-emerald-600 transition-all shadow-sm hover:scale-105 active:scale-95"
+              to="/login?demo=true"
+              className="px-6 py-3.5 rounded-xl text-center font-bold text-xs bg-emerald-600 dark:bg-emerald-500 text-white hover:bg-emerald-500 dark:hover:bg-emerald-400 transition-all shadow-sm hover:scale-105 active:scale-95"
             >
-              Sign In as Demo Seller (GreenPack)
-            </Link>
-            <Link
-              to="/login?demo=buyer"
-              className="px-6 py-3.5 rounded-xl text-center font-bold text-xs bg-emerald-600 dark:bg-teal-600 text-white hover:bg-emerald-500 dark:hover:bg-teal-500 transition-all shadow-sm hover:scale-105 active:scale-95"
-            >
-              Sign In as Demo Buyer (EcoRecycle)
+              Try Unified Business Account (Buy & Sell)
             </Link>
           </div>
         </motion.div>
