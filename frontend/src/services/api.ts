@@ -87,7 +87,9 @@ function getMockFallback<T>(url: string, options: RequestInit = {}): T | null {
         ...body,
       };
       localStorage.setItem('ecoloop_edited_listings', JSON.stringify(editedMap));
-    } catch {}
+    } catch {
+      throw new Error('Browser storage limit reached. Try using a smaller image or an image URL.');
+    }
     const updated = getLocalListings().find(m => m.id === id) || existing;
     return { message: 'Listing updated successfully', listing: updated } as unknown as T;
   }
@@ -143,7 +145,9 @@ function getMockFallback<T>(url: string, options: RequestInit = {}): T | null {
     try {
       const existing = JSON.parse(localStorage.getItem('ecoloop_custom_listings') || '[]');
       localStorage.setItem('ecoloop_custom_listings', JSON.stringify([newListing, ...existing]));
-    } catch {}
+    } catch {
+      throw new Error('Browser storage limit reached. Try using a smaller photo or an image URL.');
+    }
     return { message: 'Material published successfully!', listing: newListing } as unknown as T;
   }
 

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { MaterialListing } from '../types';
 import { api } from '../services/api';
 import {
@@ -62,21 +62,21 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
   onClose,
   onSave,
 }) => {
-  const currentImg =
-    (Array.isArray(listing.images) && listing.images.length > 0 ? listing.images[0]?.url : '') ||
-    (listing as any).imageUrl ||
-    CATEGORY_PRESETS[listing.category] ||
+  const getListingImage = (item: MaterialListing) =>
+    (Array.isArray(item.images) && item.images.length > 0 ? item.images[0]?.url : '') ||
+    (item as any).imageUrl ||
+    CATEGORY_PRESETS[item.category] ||
     CATEGORY_PRESETS['Paper/Cardboard'];
 
-  const initialCompanyName =
-    listing.seller?.businessName ||
-    (listing as any).companyName ||
-    (typeof listing.seller === 'string' ? listing.seller : 'Enterprise Seller');
+  const getCompanyName = (item: MaterialListing) =>
+    item.seller?.businessName ||
+    (item as any).companyName ||
+    (typeof item.seller === 'string' ? item.seller : 'Enterprise Seller');
 
-  const [companyName, setCompanyName] = useState(initialCompanyName);
+  const [companyName, setCompanyName] = useState(getCompanyName(listing));
   const [title, setTitle] = useState(listing.title || '');
   const [category, setCategory] = useState(listing.category || 'Paper/Cardboard');
-  const [imageUrl, setImageUrl] = useState(currentImg);
+  const [imageUrl, setImageUrl] = useState(getListingImage(listing));
   const [pricePerUnit, setPricePerUnit] = useState(String(listing.pricePerUnit || ''));
   const [quantity, setQuantity] = useState(String(listing.quantity || ''));
   const [unit, setUnit] = useState(listing.unit || 'kg');
@@ -93,6 +93,22 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    if (isOpen && listing) {
+      setCompanyName(getCompanyName(listing));
+      setTitle(listing.title || '');
+      setCategory(listing.category || 'Paper/Cardboard');
+      setImageUrl(getListingImage(listing));
+      setPricePerUnit(String(listing.pricePerUnit || ''));
+      setQuantity(String(listing.quantity || ''));
+      setUnit(listing.unit || 'kg');
+      setLocationCity(listing.locationCity || 'Kolkata');
+      setCondition(listing.condition || 'Clean / High Grade');
+      setDescription(listing.description || '');
+      setError('');
+    }
+  }, [isOpen, listing]);
+
   if (!isOpen) return null;
 
   const processImageFile = (file: File) => {
@@ -106,7 +122,7 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const maxDim = 1200;
+        const maxDim = 720;
         let width = img.width;
         let height = img.height;
         if (width > height && width > maxDim) {
@@ -121,7 +137,7 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
         const ctx = canvas.getContext('2d');
         if (ctx) {
           ctx.drawImage(img, 0, 0, width, height);
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.70);
           setImageUrl(dataUrl);
           setUploadFileName(file.name);
           setUploadFileSize((file.size / 1024).toFixed(1) + ' KB');
@@ -178,7 +194,7 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
       ],
       seller: {
         ...(listing.seller || {}),
-        id: listing.seller?.id || 'usr_seller_1',
+        id: listing.seller?.id || listing.sellerId || 'usr_seller_1',
         businessName: companyName.trim(),
         city: locationCity,
         category: listing.seller?.category || category,
@@ -187,30 +203,18 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
     };
 
     try {
-      // 1. Save in local edited listings for persistence
-      const editedMap = JSON.parse(localStorage.getItem('ecoloop_edited_listings') || '{}');
-      editedMap[listing.id] = {
-        ...editedMap[listing.id],
-        ...updates,
-      };
-      localStorage.setItem('ecoloop_edited_listings', JSON.stringify(editedMap));
-
-      // 2. Also try API update
-      try {
-        await api.materials.update(listing.id, updates);
-      } catch (err) {
-        // Safe to continue with local update
-      }
-
+      const res = await api.materials.update(listing.id, updates);
       const mergedListing: MaterialListing = {
         ...listing,
         ...updates,
+        ...(res?.listing || {}),
+        images: res?.listing?.images?.length ? res.listing.images : updates.images!,
       } as MaterialListing;
 
       onSave(mergedListing);
       onClose();
     } catch (err: any) {
-      setError(err?.message || 'Failed to save changes');
+      setError(err?.message || 'Failed to save changes. If uploading a very large photo, try a smaller image or an image URL.');
     } finally {
       setSaving(false);
     }

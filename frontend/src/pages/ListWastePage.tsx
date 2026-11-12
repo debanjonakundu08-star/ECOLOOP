@@ -59,7 +59,7 @@ export const ListWastePage: React.FC = () => {
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const maxDim = 1200;
+        const maxDim = 720;
         let width = img.width;
         let height = img.height;
         if (width > height && width > maxDim) {
@@ -74,7 +74,7 @@ export const ListWastePage: React.FC = () => {
         const ctx = canvas.getContext('2d');
         if (ctx) {
           ctx.drawImage(img, 0, 0, width, height);
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.70);
           setFormData((prev) => ({ ...prev, imageUrl: dataUrl }));
           setUploadFileName(file.name);
           setUploadFileSize((file.size / 1024).toFixed(1) + ' KB');
