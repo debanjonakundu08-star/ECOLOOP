@@ -6,7 +6,6 @@ import { MaterialListing, ImpactSummary } from '../types';
 import { MarketplaceCard } from '../components/MarketplaceCard';
 import {
   ArrowRight,
-  Sparkles,
   Recycle,
   ShieldCheck,
   Truck,
@@ -90,7 +89,7 @@ export const HomePage: React.FC = () => {
               whileHover={{ scale: 1.05 }}
               className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold bg-white/10 dark:bg-emerald-950/80 text-emerald-300 border border-emerald-400/30 backdrop-blur-md shadow-sm cursor-default"
             >
-              <Sparkles className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
               <span>India's Premier B2B Circular Economy Platform</span>
             </motion.div>
 
@@ -157,7 +156,7 @@ export const HomePage: React.FC = () => {
                 Integrated Regional Logistics
               </span>
               <span className="flex items-center gap-1.5">
-                <Sparkles className="w-4 h-4 text-emerald-400" />
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                 Direct Regional Sourcing
               </span>
             </div>

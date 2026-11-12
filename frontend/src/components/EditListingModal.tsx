@@ -1,12 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MaterialListing } from '../types';
 import { api } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { CATEGORY_IMAGES, getListingPrimaryImage } from '../utils/categoryImages';
 import {
   X,
   Upload,
   Link2,
-  Sparkles,
+  Layers,
+  ShieldAlert,
   Building2,
   CheckCircle2,
   FileImage,
@@ -48,6 +50,8 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
   onClose,
   onSave,
 }) => {
+  const { user } = useAuth();
+  const isOwner = Boolean(user && listing?.sellerId && user.id === listing.sellerId);
   const getListingImage = (item: MaterialListing) => getListingPrimaryImage(item);
 
   const getCompanyName = (item: MaterialListing) =>
@@ -92,6 +96,29 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
   }, [isOpen, listing]);
 
   if (!isOpen) return null;
+
+  if (!isOwner) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div className="relative w-full max-w-md bg-white dark:bg-ecoDark-surface rounded-2xl shadow-2xl border border-red-200 dark:border-red-900/60 p-6 text-center space-y-4">
+          <div className="w-12 h-12 mx-auto rounded-full bg-red-100 dark:bg-red-950/60 flex items-center justify-center text-red-600 dark:text-red-400">
+            <ShieldAlert className="w-6 h-6" />
+          </div>
+          <h3 className="font-bold text-lg text-slate-900 dark:text-white">Access Denied (403)</h3>
+          <p className="text-xs text-slate-600 dark:text-slate-300">
+            You cannot edit this listing. Only the registered user who originally posted this item can make changes.
+          </p>
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-5 py-2.5 rounded-xl font-bold text-xs bg-emerald-600 hover:bg-emerald-500 text-white transition-colors cursor-pointer"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const processImageFile = (file: File) => {
     if (!file.type.startsWith('image/')) {
@@ -144,6 +171,10 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isOwner) {
+      setError('Access denied: Only the original owner who listed this item can edit it.');
+      return;
+    }
     if (!title.trim()) {
       setError('Title cannot be empty');
       return;
@@ -341,7 +372,7 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
                       : 'text-slate-500 dark:text-slate-400'
                   }`}
                 >
-                  <Sparkles className="w-3 h-3 text-amber-500" />
+                  <Layers className="w-3 h-3 text-emerald-500" />
                   <span>Presets</span>
                 </button>
               </div>

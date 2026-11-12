@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { MaterialRequest } from '../types';
 import {
-  Sparkles,
+  Scale,
   CheckCircle2,
   XCircle,
   MessageSquare,
@@ -241,7 +241,7 @@ export const SellerRequestsPage: React.FC = () => {
                         onClick={() => handleOpenNegotiate(req)}
                         className="px-5 py-2.5 rounded-xl font-bold text-xs bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 dark:hover:bg-purple-900/60 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                       >
-                        <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                        <Scale className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                         <span>Negotiate Terms</span>
                       </button>
 
@@ -280,7 +280,7 @@ export const SellerRequestsPage: React.FC = () => {
             <div className="bg-white dark:bg-ecoDark-surface rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-slate-100 dark:border-emerald-500/20 space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-emerald-950/60">
                 <div className="flex items-center gap-2 font-bold text-base text-slate-900 dark:text-white">
-                  <Sparkles className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                  <Scale className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                   <span>Propose Counter-Offer</span>
                 </div>
                 <button

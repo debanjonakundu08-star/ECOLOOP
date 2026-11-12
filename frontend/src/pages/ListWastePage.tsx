@@ -16,7 +16,7 @@ import {
   Image as ImageIcon,
   Link2,
   FileImage,
-  Sparkles,
+  Layers,
   X,
   RefreshCw,
 } from 'lucide-react';
@@ -491,7 +491,7 @@ export const ListWastePage: React.FC = () => {
                         : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
                     }`}
                   >
-                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                    <Layers className="w-3.5 h-3.5 text-white" />
                     <span>Preset</span>
                   </button>
                 </div>

@@ -162,6 +162,70 @@ function getMockFallback<T>(url: string, options: RequestInit = {}): T | null {
     } as unknown as T;
   }
 
+  if (cleanUrl.startsWith('/materials/') && method === 'PUT') {
+    const id = cleanUrl.replace('/materials/', '');
+    const currentUser = getMockUser();
+    if (!currentUser) {
+      const err = new Error('Authentication required: Please log in to edit listings.');
+      (err as any).isApiError = true;
+      throw err;
+    }
+    const existing = allListings.find(m => m.id === id);
+    if (!existing) {
+      const err = new Error('Listing not found.');
+      (err as any).isApiError = true;
+      throw err;
+    }
+    // Strict ownership verification: only original poster can edit
+    if (existing.sellerId && existing.sellerId !== currentUser.id) {
+      const err = new Error('Access denied (403): Only the original owner who listed this item can edit it.');
+      (err as any).isApiError = true;
+      throw err;
+    }
+    const body = options.body ? JSON.parse(options.body as string) : {};
+    const editedMap = JSON.parse(localStorage.getItem('ecoloop_edited_listings') || '{}');
+    editedMap[id] = { ...(editedMap[id] || {}), ...body };
+    localStorage.setItem('ecoloop_edited_listings', JSON.stringify(editedMap));
+
+    try {
+      const custom = JSON.parse(localStorage.getItem('ecoloop_custom_listings') || '[]');
+      const updatedCustom = custom.map((c: any) => c.id === id ? { ...c, ...body } : c);
+      localStorage.setItem('ecoloop_custom_listings', JSON.stringify(updatedCustom));
+    } catch {}
+
+    const updatedListing = {
+      ...existing,
+      ...body,
+      sellerId: existing.sellerId || currentUser.id,
+      seller: {
+        ...(existing.seller || {}),
+        businessName: body.companyName || existing.seller?.businessName || currentUser.businessName,
+      },
+    };
+    return { message: 'Listing updated successfully.', listing: updatedListing } as unknown as T;
+  }
+
+  if (cleanUrl.startsWith('/materials/') && method === 'DELETE') {
+    const id = cleanUrl.replace('/materials/', '');
+    const currentUser = getMockUser();
+    if (!currentUser) {
+      const err = new Error('Authentication required: Please log in to delete listings.');
+      (err as any).isApiError = true;
+      throw err;
+    }
+    const existing = allListings.find(m => m.id === id);
+    if (existing && existing.sellerId && existing.sellerId !== currentUser.id) {
+      const err = new Error('Access denied (403): Only the original owner who listed this item can delete it.');
+      (err as any).isApiError = true;
+      throw err;
+    }
+    try {
+      const custom = JSON.parse(localStorage.getItem('ecoloop_custom_listings') || '[]');
+      localStorage.setItem('ecoloop_custom_listings', JSON.stringify(custom.filter((c: any) => c.id !== id)));
+    } catch {}
+    return { message: 'Listing removed successfully.' } as unknown as T;
+  }
+
   if (cleanUrl === '/materials/seller/my-listings' && method === 'GET') {
     const currentUser = getMockUser();
     const myListings = currentUser ? allListings.filter(m => m.sellerId === currentUser.id) : [];

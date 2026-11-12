@@ -14,6 +14,7 @@ import {
   Package,
   Trash2,
   ExternalLink,
+  Pencil,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -365,6 +366,13 @@ export const SellerDashboardPage: React.FC = () => {
                         title="View details"
                       >
                         <ExternalLink className="w-4 h-4" />
+                      </Link>
+                      <Link
+                        to={`/materials/${listing.id}/edit`}
+                        className="p-1 text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-400 inline-block transition-colors"
+                        title="Edit your listing"
+                      >
+                        <Pencil className="w-4 h-4" />
                       </Link>
                       <button
                         onClick={() => handleDeleteListing(listing.id)}

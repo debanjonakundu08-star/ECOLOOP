@@ -8,7 +8,6 @@ import {
   Send,
   Building2,
   ShieldCheck,
-  Sparkles,
   ArrowRight,
   Clock,
   Tag,
@@ -248,7 +247,7 @@ export const MessagingPage: React.FC = () => {
                               isMe ? 'bg-white/10 text-emerald-300' : 'bg-purple-50 dark:bg-purple-950/50 text-purple-800 dark:text-purple-300 border border-purple-100 dark:border-purple-800/60'
                             }`}>
                               <span className="flex items-center gap-1">
-                                <Sparkles className="w-3.5 h-3.5" />
+                                <Tag className="w-3.5 h-3.5" />
                                 Rate Proposal:
                               </span>
                               <span>₹{m.proposedPrice}</span>
@@ -276,7 +275,7 @@ export const MessagingPage: React.FC = () => {
                           : 'bg-slate-100 dark:bg-ecoDark-card text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-ecoDark-hover'
                       }`}
                     >
-                      <Sparkles className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                      <Tag className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
                       <span>{isNegotiation ? 'Rate Proposal Active' : '+ Propose Special Rate'}</span>
                     </button>
 

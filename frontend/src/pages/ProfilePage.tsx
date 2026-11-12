@@ -15,7 +15,7 @@ import {
   Boxes,
   PackageCheck,
   LayoutDashboard,
-  Sparkles,
+  Target,
   HelpCircle,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -306,7 +306,7 @@ export const ProfilePage: React.FC = () => {
             {/* Sourcing & Procurement Preferences */}
             <div className="pt-4 border-t border-slate-100 dark:border-emerald-950/60 space-y-4">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <Target className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
                   Sourcing & Procurement Preferences
                 </h3>

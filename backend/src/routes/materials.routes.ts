@@ -264,7 +264,7 @@ materialsRouter.put('/:id', requireAuth, async (req: AuthRequest, res: Response)
     }
 
     if (existing.sellerId !== req.user!.id) {
-      res.status(403).json({ error: 'Only the business that listed this item can edit it.' });
+      res.status(403).json({ error: 'Access denied: Only the original owner who listed this item can edit it.' });
       return;
     }
 
@@ -362,7 +362,7 @@ materialsRouter.delete('/:id', requireAuth, async (req: AuthRequest, res: Respon
     }
 
     if (existing.sellerId !== req.user!.id) {
-      res.status(403).json({ error: 'You are not authorized to delete this listing.' });
+      res.status(403).json({ error: 'Access denied: Only the original owner who listed this item can delete it.' });
       return;
     }
 

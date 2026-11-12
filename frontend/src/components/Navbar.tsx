@@ -15,7 +15,7 @@ import {
   LogOut,
   Menu,
   X,
-  Sparkles,
+  Inbox,
   BarChart3,
   Search,
   Sun,
@@ -350,7 +350,7 @@ export const Navbar: React.FC = () => {
                           onClick={() => setUserDropdownOpen(false)}
                           className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-ecoDark-surface hover:text-emerald-600 dark:hover:text-emerald-400"
                         >
-                          <Sparkles className="w-4 h-4 text-slate-400" />
+                          <Inbox className="w-4 h-4 text-slate-400" />
                           <span>Incoming Requests</span>
                         </Link>
 

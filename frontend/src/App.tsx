@@ -22,6 +22,7 @@ import { OrderDetailsPage } from './pages/OrderDetailsPage';
 import { CheckoutPage } from './pages/CheckoutPage';
 import { ImpactDashboardPage } from './pages/ImpactDashboardPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { EditListingPage } from './pages/EditListingPage';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 export const App: React.FC = () => {
@@ -49,6 +50,22 @@ export const App: React.FC = () => {
                   element={
                     <ProtectedRoute>
                       <ListWastePage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/materials/:id/edit"
+                  element={
+                    <ProtectedRoute>
+                      <EditListingPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/edit/:id"
+                  element={
+                    <ProtectedRoute>
+                      <EditListingPage />
                     </ProtectedRoute>
                   }
                 />

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Recycle, Mail, Lock, AlertCircle, ArrowRight, Sparkles } from 'lucide-react';
+import { Recycle, Mail, Lock, AlertCircle, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export const LoginPage: React.FC = () => {
@@ -72,7 +72,7 @@ export const LoginPage: React.FC = () => {
         {/* Demo Quick-Login Button */}
         <div className="bg-emerald-50/70 dark:bg-ecoDark-card/70 p-3.5 rounded-2xl border border-emerald-100 dark:border-emerald-500/20 space-y-2">
           <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-900 dark:text-emerald-300">
-            <Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
             <span>Instant Demo Business Account:</span>
           </div>
           <button
