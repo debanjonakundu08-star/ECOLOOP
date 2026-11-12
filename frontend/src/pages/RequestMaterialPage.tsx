@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { MaterialListing } from '../types';
 import { useAuth } from '../context/AuthContext';
+import { getCategoryFallbackImage, getListingPrimaryImage } from '../utils/categoryImages';
 import {
   Send,
   AlertCircle,
@@ -134,13 +135,11 @@ export const RequestMaterialPage: React.FC = () => {
           {/* Material summary box */}
           <div className="p-4 rounded-2xl bg-slate-50 dark:bg-ecoDark-card border border-slate-200/80 dark:border-emerald-950/60 flex items-center gap-4 mb-6">
             <img
-              src={listing.images[0]?.url || (listing.category === 'Metal' || listing.title?.toLowerCase().includes('steel') ? 'https://images.unsplash.com/photo-1565793298595-6a879b1d9492?auto=format&fit=crop&w=800&q=80' : 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80')}
+              src={getListingPrimaryImage(listing)}
               alt={listing.title}
               className="w-16 h-16 rounded-xl object-cover shrink-0"
               onError={(e) => {
-                (e.target as HTMLImageElement).src = listing.category === 'Metal' || listing.title?.toLowerCase().includes('steel')
-                  ? 'https://images.unsplash.com/photo-1565793298595-6a879b1d9492?auto=format&fit=crop&w=800&q=80'
-                  : 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80';
+                (e.target as HTMLImageElement).src = getCategoryFallbackImage(listing.category, listing.title);
               }}
             />
             <div className="flex-1 min-w-0">

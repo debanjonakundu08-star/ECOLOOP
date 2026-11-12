@@ -11,6 +11,7 @@ import {
 } from '../types';
 
 import { MOCK_LISTINGS, MOCK_USERS, MOCK_IMPACT } from './mockData';
+import { getCategoryFallbackImage, isLegacyStockUrl } from '../utils/categoryImages';
 
 const BASE_URL = '/api';
 
@@ -43,6 +44,7 @@ function getLocalListings(): MaterialListing[] {
     return baseListings.map((item) => {
       if (editedMap[item.id]) {
         const edits = editedMap[item.id];
+        const cleanEditUrl = edits.imageUrl && !isLegacyStockUrl(edits.imageUrl) ? edits.imageUrl : '';
         return {
           ...item,
           ...edits,
@@ -51,8 +53,8 @@ function getLocalListings(): MaterialListing[] {
             businessName: edits.companyName || edits.seller?.businessName || item.seller?.businessName || 'Enterprise Partner',
             city: edits.locationCity || item.seller?.city || 'Kolkata',
           },
-          images: edits.imageUrl
-            ? [{ id: 'img-edit-' + item.id, listingId: item.id, url: edits.imageUrl, isPrimary: true }]
+          images: cleanEditUrl
+            ? [{ id: 'img-edit-' + item.id, listingId: item.id, url: cleanEditUrl, isPrimary: true }]
             : (edits.images && edits.images.length > 0 ? edits.images : item.images),
         };
       }
@@ -137,7 +139,7 @@ function getMockFallback<T>(url: string, options: RequestInit = {}): T | null {
         {
           id: 'img-' + Date.now(),
           listingId,
-          url: body.imageUrl || body.images?.[0] || 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80',
+          url: body.imageUrl || body.images?.[0] || getCategoryFallbackImage(body.category, body.title),
           isPrimary: true,
         }
       ]

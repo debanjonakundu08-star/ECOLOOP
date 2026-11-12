@@ -6,6 +6,7 @@ import { MapPin, Heart, ArrowRight, ShieldCheck, Tag, Camera } from 'lucide-reac
 import { EditListingModal } from './EditListingModal';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { getCategoryFallbackImage, getListingPrimaryImage } from '../utils/categoryImages';
 
 interface MarketplaceCardProps {
   listing: MaterialListing;
@@ -48,40 +49,10 @@ export const MarketplaceCard: React.FC<MarketplaceCardProps> = ({ listing, isSav
     }
   };
 
-const CATEGORY_FALLBACKS: Record<string, string> = {
-  'Paper/Cardboard': 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80',
-  'Plastic': 'https://images.unsplash.com/photo-1595278069441-2cf29f8005a4?auto=format&fit=crop&w=800&q=80',
-  'Metal': 'https://images.unsplash.com/photo-1565793298595-6a879b1d9492?auto=format&fit=crop&w=800&q=80',
-  'Glass': 'https://images.unsplash.com/photo-1589365278144-c9e705f843ba?auto=format&fit=crop&w=800&q=80',
-  'Wood': 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=800&q=80',
-  'Textile': 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=800&q=80',
-  'Food waste': 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=800&q=80',
-  'Packaging materials': 'https://images.unsplash.com/photo-1577705998148-6da4f3963bc8?auto=format&fit=crop&w=800&q=80',
-  'Construction materials': 'https://images.unsplash.com/photo-1590069261209-f8e9b8642343?auto=format&fit=crop&w=800&q=80',
-  'Industrial scrap': 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80',
-  'Furniture': 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=800&q=80',
-  'Business equipment': 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80',
-};
-
   if (!currentListing) return null;
 
-  const isSteelOrMetal = currentListing.category === 'Metal' || currentListing.title?.toLowerCase().includes('steel') || currentListing.title?.toLowerCase().includes('metal');
-  const catFallback = isSteelOrMetal
-    ? 'https://images.unsplash.com/photo-1565793298595-6a879b1d9492?auto=format&fit=crop&w=800&q=80'
-    : (CATEGORY_FALLBACKS[currentListing.category || ''] || 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80');
-
-  let primaryImage = catFallback;
-  if (Array.isArray(currentListing.images) && currentListing.images.length > 0) {
-    const found = currentListing.images.find((img) => img?.isPrimary)?.url;
-    primaryImage = found || currentListing.images[0]?.url || primaryImage;
-  } else if (typeof (currentListing as any)?.imageUrl === 'string' && (currentListing as any).imageUrl) {
-    primaryImage = (currentListing as any).imageUrl;
-  }
-
-  // Intercept old broken unsplash metal URL
-  if (primaryImage.includes('1504917599217')) {
-    primaryImage = 'https://images.unsplash.com/photo-1565793298595-6a879b1d9492?auto=format&fit=crop&w=800&q=80';
-  }
+  const catFallback = getCategoryFallbackImage(currentListing.category, currentListing.title);
+  const primaryImage = getListingPrimaryImage(currentListing);
 
   const sellerBusinessName =
     (currentListing as any).companyName ||

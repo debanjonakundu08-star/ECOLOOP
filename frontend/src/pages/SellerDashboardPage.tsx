@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import { MaterialRequest, MaterialListing, Order } from '../types';
+import { getCategoryFallbackImage, getListingPrimaryImage } from '../utils/categoryImages';
 import {
   Boxes,
   Clock,
@@ -337,13 +338,11 @@ export const SellerDashboardPage: React.FC = () => {
                   <tr key={listing.id} className="hover:bg-slate-50/50 dark:hover:bg-ecoDark-card/50 transition-colors">
                     <td className="p-3 font-bold text-slate-900 dark:text-white flex items-center gap-2">
                       <img
-                        src={listing.images[0]?.url || (listing.category === 'Metal' || listing.title?.toLowerCase().includes('steel') ? 'https://images.unsplash.com/photo-1565793298595-6a879b1d9492?auto=format&fit=crop&w=800&q=80' : 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80')}
+                        src={getListingPrimaryImage(listing)}
                         alt=""
                         className="w-8 h-8 rounded-lg object-cover shrink-0"
                         onError={(e) => {
-                          (e.target as HTMLImageElement).src = listing.category === 'Metal' || listing.title?.toLowerCase().includes('steel')
-                            ? 'https://images.unsplash.com/photo-1565793298595-6a879b1d9492?auto=format&fit=crop&w=800&q=80'
-                            : 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80';
+                          (e.target as HTMLImageElement).src = getCategoryFallbackImage(listing.category, listing.title);
                         }}
                       />
                       <span className="truncate max-w-[200px]">{listing.title}</span>

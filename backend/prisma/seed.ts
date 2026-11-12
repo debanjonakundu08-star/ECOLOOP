@@ -181,7 +181,7 @@ async function main() {
       locationAddress: 'Sector V Warehouse, Salt Lake, Kolkata',
       availability: 'Immediate',
       minOrderQuantity: 250,
-      imageUrl: 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80',
+      imageUrl: '/images/cat-cardboard.jpg',
     },
     {
       sellerId: buyerUser.id,
@@ -196,7 +196,7 @@ async function main() {
       locationAddress: 'Dona Paula Industrial Estate, Howrah',
       availability: 'Immediate',
       minOrderQuantity: 500,
-      imageUrl: 'https://images.unsplash.com/photo-1595278069441-2cf29f8005a4?auto=format&fit=crop&w=800&q=80',
+      imageUrl: '/images/cat-plastic.jpg',
     },
     {
       sellerId: sellerUser.id,
@@ -211,7 +211,7 @@ async function main() {
       locationAddress: 'Tangra Industrial Hub, Kolkata',
       availability: 'Immediate',
       minOrderQuantity: 240,
-      imageUrl: 'https://images.unsplash.com/photo-1589365278144-c9e705f843ba?auto=format&fit=crop&w=800&q=80',
+      imageUrl: '/images/cat-glass.jpg',
     },
     {
       sellerId: kolkataTextilesUser.id,
@@ -226,7 +226,7 @@ async function main() {
       locationAddress: 'Taratala Industrial Area, Kolkata',
       availability: 'Within 1 week',
       minOrderQuantity: 300,
-      imageUrl: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=800&q=80',
+      imageUrl: '/images/cat-textile.jpg',
     },
     {
       sellerId: siliguriWoodUser.id,
@@ -241,7 +241,7 @@ async function main() {
       locationAddress: 'Sevoke Road Yard, Siliguri',
       availability: 'Immediate',
       minOrderQuantity: 20,
-      imageUrl: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=800&q=80',
+      imageUrl: '/images/cat-wood.jpg',
     },
     {
       sellerId: buyerUser.id,
@@ -256,7 +256,7 @@ async function main() {
       locationAddress: 'Howrah Freight Terminal, Howrah',
       availability: 'Immediate',
       minOrderQuantity: 10,
-      imageUrl: 'https://images.unsplash.com/photo-1578328819058-b69f3a3b0f6b?auto=format&fit=crop&w=800&q=80',
+      imageUrl: '/images/cat-packaging.jpg',
     },
     {
       sellerId: assamBioUser.id,
@@ -271,7 +271,7 @@ async function main() {
       locationAddress: 'Six Mile Depot, Guwahati',
       availability: 'Recurring Monthly',
       minOrderQuantity: 100,
-      imageUrl: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=800&q=80',
+      imageUrl: '/images/cat-food-waste.jpg',
     },
     {
       sellerId: howrahMetalUser.id,
@@ -286,7 +286,7 @@ async function main() {
       locationAddress: 'Jalan Industrial Estate, NH6, Howrah',
       availability: 'Immediate',
       minOrderQuantity: 500,
-      imageUrl: 'https://images.unsplash.com/photo-1565793298595-6a879b1d9492?auto=format&fit=crop&w=800&q=80',
+      imageUrl: '/images/cat-metal.jpg',
     },
     {
       sellerId: sellerUser.id,
@@ -301,7 +301,7 @@ async function main() {
       locationAddress: 'New Town Eco Park Outskirts, Kolkata',
       availability: 'Immediate',
       minOrderQuantity: 1000,
-      imageUrl: 'https://images.unsplash.com/photo-1590069261209-f8e9b8642343?auto=format&fit=crop&w=800&q=80',
+      imageUrl: '/images/cat-construction.jpg',
     },
     {
       sellerId: howrahMetalUser.id,
@@ -316,7 +316,7 @@ async function main() {
       locationAddress: 'Kasba Industrial Estate, Kolkata',
       availability: 'Within 1 week',
       minOrderQuantity: 200,
-      imageUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80',
+      imageUrl: '/images/cat-industrial-scrap.jpg',
     },
     {
       sellerId: sellerUser.id,
@@ -331,7 +331,7 @@ async function main() {
       locationAddress: 'Sector V IT Corridor, Salt Lake, Kolkata',
       availability: 'Immediate',
       minOrderQuantity: 4,
-      imageUrl: 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=800&q=80',
+      imageUrl: '/images/cat-furniture.jpg',
     },
     {
       sellerId: siliguriWoodUser.id,
@@ -346,7 +346,7 @@ async function main() {
       locationAddress: 'Burdwan Road Depot, Siliguri',
       availability: 'Immediate',
       minOrderQuantity: 2,
-      imageUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80',
+      imageUrl: '/images/cat-business-equipment.jpg',
     },
     {
       sellerId: sellerUser.id,
@@ -361,7 +361,7 @@ async function main() {
       locationAddress: 'Salt Lake Sector V, Kolkata',
       availability: 'Immediate',
       minOrderQuantity: 50,
-      imageUrl: 'https://images.unsplash.com/photo-1577705998148-6da4f3963bc8?auto=format&fit=crop&w=800&q=80',
+      imageUrl: '/images/cat-packaging.jpg',
     },
     {
       sellerId: assamBioUser.id,
@@ -376,7 +376,7 @@ async function main() {
       locationAddress: 'Beltola Industrial Hub, Guwahati',
       availability: 'Recurring Monthly',
       minOrderQuantity: 1000,
-      imageUrl: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=800&q=80',
+      imageUrl: '/images/cat-wood.jpg',
     },
   ];
 

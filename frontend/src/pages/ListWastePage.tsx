@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { CATEGORY_IMAGES } from '../utils/categoryImages';
 import {
   PlusCircle,
   Upload,
@@ -37,7 +38,7 @@ export const ListWastePage: React.FC = () => {
     locationAddress: user?.address || 'Industrial Area Phase 2',
     availability: 'Immediate',
     minOrderQuantity: '100',
-    imageUrl: 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80',
+    imageUrl: CATEGORY_IMAGES['Paper/Cardboard'],
   });
 
   const [error, setError] = useState('');
@@ -122,20 +123,7 @@ export const ListWastePage: React.FC = () => {
   const availabilities = ['Immediate', 'Within 1 week', 'Recurring Monthly', 'Custom'];
 
   // Sample photo presets per category for fast realistic listing
-  const categoryPhotoPresets: Record<string, string> = {
-    'Paper/Cardboard': 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80',
-    'Plastic': 'https://images.unsplash.com/photo-1595278069441-2cf29f8005a4?auto=format&fit=crop&w=800&q=80',
-    'Metal': 'https://images.unsplash.com/photo-1565793298595-6a879b1d9492?auto=format&fit=crop&w=800&q=80',
-    'Glass': 'https://images.unsplash.com/photo-1589365278144-c9e705f843ba?auto=format&fit=crop&w=800&q=80',
-    'Wood': 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=800&q=80',
-    'Textile': 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=800&q=80',
-    'Food waste': 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=800&q=80',
-    'Packaging materials': 'https://images.unsplash.com/photo-1577705998148-6da4f3963bc8?auto=format&fit=crop&w=800&q=80',
-    'Construction materials': 'https://images.unsplash.com/photo-1590069261209-f8e9b8642343?auto=format&fit=crop&w=800&q=80',
-    'Industrial scrap': 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80',
-    'Furniture': 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=800&q=80',
-    'Business equipment': 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80',
-  };
+  const categoryPhotoPresets: Record<string, string> = CATEGORY_IMAGES;
 
   const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newCat = e.target.value;
@@ -193,7 +181,7 @@ export const ListWastePage: React.FC = () => {
         locationAddress: 'Sector V Salt Lake, Kolkata',
         availability: 'Immediate',
         minOrderQuantity: '250',
-        imageUrl: 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80',
+        imageUrl: CATEGORY_IMAGES['Paper/Cardboard'],
       },
       {
         category: 'Plastic',
@@ -207,7 +195,7 @@ export const ListWastePage: React.FC = () => {
         locationAddress: 'Jalan Industrial Estate, Howrah',
         availability: 'Immediate',
         minOrderQuantity: '500',
-        imageUrl: 'https://images.unsplash.com/photo-1595278069441-2cf29f8005a4?auto=format&fit=crop&w=800&q=80',
+        imageUrl: CATEGORY_IMAGES['Plastic'],
       },
       {
         category: 'Wood',
@@ -221,7 +209,7 @@ export const ListWastePage: React.FC = () => {
         locationAddress: 'Sevoke Road Freight Yard, Siliguri',
         availability: 'Immediate',
         minOrderQuantity: '20',
-        imageUrl: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=800&q=80',
+        imageUrl: CATEGORY_IMAGES['Wood'],
       },
     ];
 

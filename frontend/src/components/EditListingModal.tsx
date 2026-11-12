@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MaterialListing } from '../types';
 import { api } from '../services/api';
+import { CATEGORY_IMAGES, getListingPrimaryImage } from '../utils/categoryImages';
 import {
   X,
   Upload,
@@ -22,21 +23,6 @@ interface EditListingModalProps {
   onClose: () => void;
   onSave: (updated: MaterialListing) => void;
 }
-
-const CATEGORY_PRESETS: Record<string, string> = {
-  'Paper/Cardboard': 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80',
-  'Plastic': 'https://images.unsplash.com/photo-1595278069441-2cf29f8005a4?auto=format&fit=crop&w=800&q=80',
-  'Metal': 'https://images.unsplash.com/photo-1565793298595-6a879b1d9492?auto=format&fit=crop&w=800&q=80',
-  'Glass': 'https://images.unsplash.com/photo-1589365278144-c9e705f843ba?auto=format&fit=crop&w=800&q=80',
-  'Wood': 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=800&q=80',
-  'Textile': 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=800&q=80',
-  'Food waste': 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=800&q=80',
-  'Packaging materials': 'https://images.unsplash.com/photo-1577705998148-6da4f3963bc8?auto=format&fit=crop&w=800&q=80',
-  'Construction materials': 'https://images.unsplash.com/photo-1590069261209-f8e9b8642343?auto=format&fit=crop&w=800&q=80',
-  'Industrial scrap': 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80',
-  'Furniture': 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=800&q=80',
-  'Business equipment': 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80',
-};
 
 const CATEGORIES = [
   'Paper/Cardboard',
@@ -62,11 +48,7 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
   onClose,
   onSave,
 }) => {
-  const getListingImage = (item: MaterialListing) =>
-    (Array.isArray(item.images) && item.images.length > 0 ? item.images[0]?.url : '') ||
-    (item as any).imageUrl ||
-    CATEGORY_PRESETS[item.category] ||
-    CATEGORY_PRESETS['Paper/Cardboard'];
+  const getListingImage = (item: MaterialListing) => getListingPrimaryImage(item);
 
   const getCompanyName = (item: MaterialListing) =>
     item.seller?.businessName ||
@@ -302,7 +284,7 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
                   const newCat = e.target.value;
                   setCategory(newCat);
                   if (imageMode === 'preset') {
-                    setImageUrl(CATEGORY_PRESETS[newCat] || CATEGORY_PRESETS['Paper/Cardboard']);
+                    setImageUrl(CATEGORY_IMAGES[newCat] || CATEGORY_IMAGES['Paper/Cardboard']);
                   }
                 }}
                 className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-emerald-900/60 focus:border-emerald-500 focus:outline-none bg-white dark:bg-ecoDark-card text-slate-900 dark:text-white font-medium"
@@ -351,7 +333,7 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
                   type="button"
                   onClick={() => {
                     setImageMode('preset');
-                    setImageUrl(CATEGORY_PRESETS[category] || CATEGORY_PRESETS['Paper/Cardboard']);
+                    setImageUrl(CATEGORY_IMAGES[category] || CATEGORY_IMAGES['Paper/Cardboard']);
                   }}
                   className={`flex items-center gap-1 px-2.5 py-1 rounded-md font-semibold text-xs transition-all ${
                     imageMode === 'preset'
@@ -446,7 +428,7 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
             {imageMode === 'preset' && (
               <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-ecoDark-card border border-slate-200 dark:border-emerald-900/60">
                 <img
-                  src={CATEGORY_PRESETS[category] || CATEGORY_PRESETS['Paper/Cardboard']}
+                  src={CATEGORY_IMAGES[category] || CATEGORY_IMAGES['Paper/Cardboard']}
                   alt=""
                   className="w-12 h-12 rounded-lg object-cover border border-emerald-500/40"
                 />
@@ -456,7 +438,7 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
                   </p>
                   <button
                     type="button"
-                    onClick={() => setImageUrl(CATEGORY_PRESETS[category] || CATEGORY_PRESETS['Paper/Cardboard'])}
+                    onClick={() => setImageUrl(CATEGORY_IMAGES[category] || CATEGORY_IMAGES['Paper/Cardboard'])}
                     className="text-[11px] text-emerald-600 dark:text-emerald-400 hover:underline font-semibold mt-0.5"
                   >
                     Use this preset

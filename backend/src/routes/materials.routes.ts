@@ -210,7 +210,20 @@ materialsRouter.post('/', requireAuth, async (req: AuthRequest, res: Response): 
                 isPrimary: index === 0,
               }))
             : [{
-                url: 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80',
+                url: ({
+                  'Paper/Cardboard': '/images/cat-cardboard.jpg',
+                  'Plastic': '/images/cat-plastic.jpg',
+                  'Metal': '/images/cat-metal.jpg',
+                  'Glass': '/images/cat-glass.jpg',
+                  'Wood': '/images/cat-wood.jpg',
+                  'Textile': '/images/cat-textile.jpg',
+                  'Food waste': '/images/cat-food-waste.jpg',
+                  'Packaging materials': '/images/cat-packaging.jpg',
+                  'Construction materials': '/images/cat-construction.jpg',
+                  'Industrial scrap': '/images/cat-industrial-scrap.jpg',
+                  'Furniture': '/images/cat-furniture.jpg',
+                  'Business equipment': '/images/cat-business-equipment.jpg',
+                } as Record<string, string>)[category.trim()] || '/images/cat-cardboard.jpg',
                 isPrimary: true,
               }],
         },

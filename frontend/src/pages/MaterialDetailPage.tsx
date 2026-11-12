@@ -6,6 +6,7 @@ import { MaterialListing } from '../types';
 import { MarketplaceCard } from '../components/MarketplaceCard';
 import { EditListingModal } from '../components/EditListingModal';
 import { useAuth } from '../context/AuthContext';
+import { getCategoryFallbackImage, getListingPrimaryImage } from '../utils/categoryImages';
 import {
   MapPin,
   Heart,
@@ -37,17 +38,7 @@ export const MaterialDetailPage: React.FC = () => {
         if (res && res.listing) {
           setListing(res.listing);
           setRelated(Array.isArray(res.related) ? res.related : []);
-          const isMetal = res.listing.category === 'Metal' || res.listing.title?.toLowerCase().includes('steel');
-          const defaultFallback = isMetal
-            ? 'https://images.unsplash.com/photo-1565793298595-6a879b1d9492?auto=format&fit=crop&w=800&q=80'
-            : 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80';
-          let firstImg = Array.isArray(res.listing.images) && res.listing.images.length > 0
-            ? res.listing.images[0]?.url
-            : defaultFallback;
-          if (!firstImg || firstImg.includes('1504917599217')) {
-            firstImg = defaultFallback;
-          }
-          setSelectedImage(firstImg);
+          setSelectedImage(getListingPrimaryImage(res.listing));
         }
       } catch (err) {
         console.error('Failed to load material details:', err);
@@ -141,13 +132,11 @@ export const MaterialDetailPage: React.FC = () => {
             <div className="lg:col-span-5 space-y-4">
               <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-slate-100 dark:bg-ecoDark-card border border-slate-200/80 dark:border-emerald-500/20 shadow-inner">
                 <img
-                  src={selectedImage || (listing.category === 'Metal' || listing.title?.toLowerCase().includes('steel') ? 'https://images.unsplash.com/photo-1565793298595-6a879b1d9492?auto=format&fit=crop&w=800&q=80' : 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80')}
+                  src={selectedImage || getListingPrimaryImage(listing)}
                   alt={listing.title}
                   className="w-full h-full object-cover"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = listing.category === 'Metal' || listing.title?.toLowerCase().includes('steel')
-                      ? 'https://images.unsplash.com/photo-1565793298595-6a879b1d9492?auto=format&fit=crop&w=800&q=80'
-                      : 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80';
+                    (e.target as HTMLImageElement).src = getCategoryFallbackImage(listing.category, listing.title);
                   }}
                 />
                 <div className="absolute top-3 left-3">
