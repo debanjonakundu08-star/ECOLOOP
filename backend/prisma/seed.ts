@@ -376,7 +376,7 @@ async function main() {
       locationAddress: 'Beltola Industrial Hub, Guwahati',
       availability: 'Recurring Monthly',
       minOrderQuantity: 1000,
-      imageUrl: '/images/cat-wood.jpg',
+      imageUrl: '/images/cat-sawdust.jpg',
     },
   ];
 

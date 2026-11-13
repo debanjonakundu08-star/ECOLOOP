@@ -6,6 +6,7 @@ export const CATEGORY_IMAGES: Record<string, string> = {
   'Metal': '/images/cat-metal.jpg',
   'Glass': '/images/cat-glass.jpg',
   'Wood': '/images/cat-wood.jpg',
+  'Sawdust': '/images/cat-sawdust.jpg',
   'Textile': '/images/cat-textile.jpg',
   'Food waste': '/images/cat-food-waste.jpg',
   'Packaging materials': '/images/cat-packaging.jpg',
@@ -16,10 +17,12 @@ export const CATEGORY_IMAGES: Record<string, string> = {
 };
 
 const TITLE_KEYWORD_IMAGES: Array<{ pattern: RegExp; image: string }> = [
+  { pattern: /\b(sawdust|wood\s*chips?|shavings?|wood\s*powder|bark|mulch)\b/i, image: '/images/cat-sawdust.jpg' },
   { pattern: /\b(cardboard|corrugated|kraft|carton|paper)\b/i, image: CATEGORY_IMAGES['Paper/Cardboard'] },
   { pattern: /\b(plastic|hdpe|ldpe|pet|pvc|polyethylene|polymer|granule|regrind)\b/i, image: CATEGORY_IMAGES['Plastic'] },
   { pattern: /\b(steel|stainless|ss\s*304|metal|iron|alloy|aluminum|aluminium|copper)\b/i, image: CATEGORY_IMAGES['Metal'] },
-  { pattern: /\b(wood|wooden|timber|pallet|epal|pine|lumber)\b/i, image: CATEGORY_IMAGES['Wood'] },
+  { pattern: /\b(pallet|epal|crates?)\b/i, image: CATEGORY_IMAGES['Wood'] },
+  { pattern: /\b(wood|wooden|timber|pine|lumber)\b/i, image: CATEGORY_IMAGES['Wood'] },
   { pattern: /\b(glass|bottle|amber|cullet)\b/i, image: CATEGORY_IMAGES['Glass'] },
   { pattern: /\b(textile|fabric|cotton|garment|cloth|clipping|selvedge)\b/i, image: CATEGORY_IMAGES['Textile'] },
   { pattern: /\b(food|organic|compost|biomass|peel|vegetable)\b/i, image: CATEGORY_IMAGES['Food waste'] },
@@ -55,15 +58,15 @@ export function isLegacyStockUrl(url: string): boolean {
 }
 
 export function getCategoryFallbackImage(category?: string | null, title?: string | null): string {
-  if (category && CATEGORY_IMAGES[category]) {
-    return CATEGORY_IMAGES[category];
-  }
   if (title) {
     for (const entry of TITLE_KEYWORD_IMAGES) {
       if (entry.pattern.test(title)) {
         return entry.image;
       }
     }
+  }
+  if (category && CATEGORY_IMAGES[category]) {
+    return CATEGORY_IMAGES[category];
   }
   return CATEGORY_IMAGES['Paper/Cardboard'];
 }
@@ -77,6 +80,13 @@ export function getListingPrimaryImage(listing: Partial<MaterialListing> & { ima
     candidate = primary || listing.images[0]?.url || '';
   } else if (typeof listing?.imageUrl === 'string' && listing.imageUrl) {
     candidate = listing.imageUrl;
+  }
+
+  // If item is specifically sawdust or wood chips but has the generic wood pallet image, override with sawdust photo
+  if (listing?.title && /\b(sawdust|wood\s*chips?|shavings?)\b/i.test(listing.title)) {
+    if (!candidate || isLegacyStockUrl(candidate) || candidate === '/images/cat-wood.jpg') {
+      return '/images/cat-sawdust.jpg';
+    }
   }
 
   if (!candidate || isLegacyStockUrl(candidate)) {
