@@ -120,11 +120,11 @@ export const SellerListingsPage: React.FC = () => {
 
           <div className="flex items-center gap-3 shrink-0">
             <Link
-              to="/seller/add-listing"
+              to="/seller/list-waste"
               className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-xs bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white transition-all shadow-md shadow-emerald-900/20 hover:scale-[1.02] active:scale-[0.98]"
             >
               <PlusCircle className="w-4 h-4" />
-              <span>Add New Listing</span>
+              <span>List Your Waste</span>
             </Link>
           </div>
         </div>

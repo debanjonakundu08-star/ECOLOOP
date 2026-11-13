@@ -191,7 +191,7 @@ export const SellerAddListingPage: React.FC = () => {
           <div className="space-y-2">
             <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
               <PlusCircle className="w-7 h-7 text-emerald-600 dark:text-emerald-400" />
-              <span>Add New Listing</span>
+              <span>List Your Waste</span>
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-2xl">
               Publish secondary raw materials, industrial scrap, or recyclable surplus lots to verified buyers across the B2B circular economy network.

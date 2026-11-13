@@ -326,8 +326,19 @@ function getMockFallback<T>(url: string, options: RequestInit = {}): T | null {
   if (cleanUrl === '/seller/dashboard') {
     const currentUser = getMockUser();
     const myListings = currentUser ? allListings.filter(m => m.sellerId === currentUser.id) : [];
+    const soldListings = myListings.filter(m => m.availability === 'SOLD');
+    const availableListings = myListings.filter(m => m.availability !== 'SOLD');
     return {
-      kpis: { activeListings: myListings.length, pendingRequests: 0, completedSales: 0, totalRevenue: 0 },
+      kpis: {
+        totalListings: myListings.length,
+        activeListings: availableListings.length,
+        soldItems: soldListings.length,
+        availableItems: availableListings.length,
+        buyerEnquiries: 0,
+        pendingRequests: 0,
+        completedSales: 0,
+        totalRevenue: 0,
+      },
       recentRequests: [],
       myListings,
       recentOrders: [],
@@ -801,7 +812,16 @@ export const api = {
 
   seller: {
     getDashboard: () => fetchJson<{
-      kpis: { activeListings: number; pendingRequests: number; completedSales: number; totalRevenue: number };
+      kpis: {
+        totalListings: number;
+        activeListings: number;
+        soldItems: number;
+        availableItems: number;
+        buyerEnquiries: number;
+        pendingRequests: number;
+        completedSales: number;
+        totalRevenue: number;
+      };
       recentRequests: MaterialRequest[];
       myListings: MaterialListing[];
       recentOrders: Order[];

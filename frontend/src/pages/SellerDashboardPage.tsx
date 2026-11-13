@@ -32,7 +32,16 @@ import { motion } from 'framer-motion';
 
 export const SellerDashboardPage: React.FC = () => {
   const [data, setData] = useState<{
-    kpis: { activeListings: number; pendingRequests: number; completedSales: number; totalRevenue: number };
+    kpis: {
+      totalListings?: number;
+      activeListings: number;
+      availableItems?: number;
+      soldItems?: number;
+      buyerEnquiries?: number;
+      pendingRequests: number;
+      completedSales: number;
+      totalRevenue: number;
+    };
     recentRequests: MaterialRequest[];
     myListings: MaterialListing[];
     recentOrders: Order[];
@@ -116,78 +125,99 @@ export const SellerDashboardPage: React.FC = () => {
               Incoming Bids ({data.kpis.pendingRequests})
             </Link>
             <Link
-              to="/seller/add-listing"
+              to="/seller/list-waste"
               className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white transition-all shadow-md whitespace-nowrap"
             >
               <PlusCircle className="w-4 h-4" />
-              <span>Add New Listing</span>
+              <span>List Your Waste</span>
             </Link>
           </div>
         </div>
 
-        {/* 1. KPI Metric Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        {/* 1. Required Seller KPI Metric Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+          {/* 1. Total Listed Items */}
           <motion.div
-            whileHover={{ y: -4 }}
-            className="bg-white dark:bg-ecoDark-surface p-6 rounded-2xl border border-slate-200/80 dark:border-emerald-500/20 shadow-card dark:shadow-glow-sm transition-all"
+            whileHover={{ y: -3 }}
+            className="bg-white dark:bg-ecoDark-surface p-5 rounded-2xl border border-slate-200/80 dark:border-emerald-500/20 shadow-card transition-all"
           >
             <div className="flex items-center justify-between text-slate-400 dark:text-slate-500">
-              <span className="text-xs font-bold uppercase tracking-wider">Active Inventory</span>
-              <Boxes className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+              <span className="text-[11px] font-bold uppercase tracking-wider">Total Listed</span>
+              <Boxes className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             </div>
-            <div className="text-3xl font-black text-slate-900 dark:text-white mt-2">
+            <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1.5">
+              {data.kpis.totalListings ?? (data.kpis.activeListings + (data.kpis.soldItems || 0))}
+            </div>
+            <div className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold mt-1">
+              All registered lots
+            </div>
+          </motion.div>
+
+          {/* 2. Active Listings */}
+          <motion.div
+            whileHover={{ y: -3 }}
+            className="bg-white dark:bg-ecoDark-surface p-5 rounded-2xl border border-slate-200/80 dark:border-emerald-500/20 shadow-card transition-all"
+          >
+            <div className="flex items-center justify-between text-slate-400 dark:text-slate-500">
+              <span className="text-[11px] font-bold uppercase tracking-wider">Active Listings</span>
+              <Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1.5">
               {data.kpis.activeListings}
             </div>
-            <div className="text-xs text-emerald-700 dark:text-emerald-400 font-semibold mt-1">
+            <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1">
               Live in marketplace
             </div>
           </motion.div>
 
+          {/* 3. Available Items */}
           <motion.div
-            whileHover={{ y: -4 }}
-            className="bg-white dark:bg-ecoDark-surface p-6 rounded-2xl border border-slate-200/80 dark:border-emerald-500/20 shadow-card dark:shadow-glow-sm transition-all"
+            whileHover={{ y: -3 }}
+            className="bg-white dark:bg-ecoDark-surface p-5 rounded-2xl border border-slate-200/80 dark:border-emerald-500/20 shadow-card transition-all"
           >
             <div className="flex items-center justify-between text-slate-400 dark:text-slate-500">
-              <span className="text-xs font-bold uppercase tracking-wider">Pending Bids</span>
-              <Clock className="w-5 h-5 text-amber-500 dark:text-amber-400" />
+              <span className="text-[11px] font-bold uppercase tracking-wider">Available Items</span>
+              <Package className="w-4 h-4 text-teal-600 dark:text-teal-400" />
             </div>
-            <div className="text-3xl font-black text-slate-900 dark:text-white mt-2">
-              {data.kpis.pendingRequests}
+            <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1.5">
+              {data.kpis.availableItems ?? data.kpis.activeListings}
             </div>
-            <div className="text-xs text-amber-600 dark:text-amber-400 font-semibold mt-1">
-              Awaiting your response
+            <div className="text-[11px] text-teal-600 dark:text-teal-400 font-semibold mt-1">
+              Ready for dispatch
             </div>
           </motion.div>
 
+          {/* 4. Sold Items */}
           <motion.div
-            whileHover={{ y: -4 }}
-            className="bg-white dark:bg-ecoDark-surface p-6 rounded-2xl border border-slate-200/80 dark:border-emerald-500/20 shadow-card dark:shadow-glow-sm transition-all"
+            whileHover={{ y: -3 }}
+            className="bg-white dark:bg-ecoDark-surface p-5 rounded-2xl border border-slate-200/80 dark:border-emerald-500/20 shadow-card transition-all"
           >
             <div className="flex items-center justify-between text-slate-400 dark:text-slate-500">
-              <span className="text-xs font-bold uppercase tracking-wider">Completed Sales</span>
-              <CheckCircle2 className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+              <span className="text-[11px] font-bold uppercase tracking-wider">Sold Items</span>
+              <CheckCircle2 className="w-4 h-4 text-amber-500 dark:text-amber-400" />
             </div>
-            <div className="text-3xl font-black text-slate-900 dark:text-white mt-2">
-              {data.kpis.completedSales}
+            <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1.5">
+              {data.kpis.soldItems ?? data.kpis.completedSales}
             </div>
-            <div className="text-xs text-teal-700 dark:text-teal-400 font-semibold mt-1">
-              Delivered transactions
+            <div className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold mt-1">
+              Fulfilled streams
             </div>
           </motion.div>
 
+          {/* 5. Buyer Enquiries */}
           <motion.div
-            whileHover={{ y: -4 }}
-            className="bg-white dark:bg-ecoDark-surface p-6 rounded-2xl border border-slate-200/80 dark:border-emerald-500/20 shadow-card dark:shadow-glow-sm transition-all"
+            whileHover={{ y: -3 }}
+            className="bg-white dark:bg-ecoDark-surface p-5 rounded-2xl border border-slate-200/80 dark:border-emerald-500/20 shadow-card transition-all"
           >
             <div className="flex items-center justify-between text-slate-400 dark:text-slate-500">
-              <span className="text-xs font-bold uppercase tracking-wider">Circulated Revenue</span>
-              <IndianRupee className="w-5 h-5 text-emerald-700 dark:text-emerald-400" />
+              <span className="text-[11px] font-bold uppercase tracking-wider">Buyer Enquiries</span>
+              <IndianRupee className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
             </div>
-            <div className="text-3xl font-black text-emerald-800 dark:text-emerald-400 mt-2">
-              ₹{data.kpis.totalRevenue.toLocaleString('en-IN')}
+            <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1.5">
+              {data.kpis.buyerEnquiries ?? data.kpis.pendingRequests}
             </div>
-            <div className="text-xs text-emerald-600 dark:text-emerald-300 font-semibold mt-1">
-              Direct business proceeds
+            <div className="text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold mt-1">
+              Incoming bids &amp; chats
             </div>
           </motion.div>
         </div>

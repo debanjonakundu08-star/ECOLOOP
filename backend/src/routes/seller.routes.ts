@@ -10,8 +10,24 @@ sellerRouter.get('/dashboard', requireAuth, async (req: AuthRequest, res: Respon
     const sellerId = req.user!.id;
 
     // 1. KPI Counts
+    const totalListings = await prisma.materialListing.count({
+      where: { sellerId },
+    });
+
     const activeListingsCount = await prisma.materialListing.count({
       where: { sellerId, status: 'ACTIVE' },
+    });
+
+    const soldListingsCount = await prisma.materialListing.count({
+      where: { sellerId, availability: 'SOLD' },
+    });
+
+    const availableListingsCount = await prisma.materialListing.count({
+      where: { sellerId, availability: { not: 'SOLD' }, status: 'ACTIVE' },
+    });
+
+    const buyerEnquiriesCount = await prisma.materialRequest.count({
+      where: { sellerId },
     });
 
     const pendingRequestsCount = await prisma.materialRequest.count({
@@ -102,7 +118,11 @@ sellerRouter.get('/dashboard', requireAuth, async (req: AuthRequest, res: Respon
 
     res.json({
       kpis: {
+        totalListings,
         activeListings: activeListingsCount,
+        soldItems: soldListingsCount,
+        availableItems: availableListingsCount,
+        buyerEnquiries: buyerEnquiriesCount,
         pendingRequests: pendingRequestsCount,
         completedSales: completedSalesCount,
         totalRevenue: Math.round(totalRevenue),

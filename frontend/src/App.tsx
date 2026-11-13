@@ -29,6 +29,7 @@ import { ImpactDashboardPage } from './pages/ImpactDashboardPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { EditListingPage } from './pages/EditListingPage';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { RootGateway } from './components/RootGateway';
 
 export const App: React.FC = () => {
   return (
@@ -41,8 +42,9 @@ export const App: React.FC = () => {
               <main className="flex-1">
                 <ErrorBoundary>
                   <Routes>
-                    {/* Public Routes */}
-                    <Route path="/" element={<HomePage />} />
+                    {/* Entry Route: Role Selection Gateway or Direct Role Dashboard */}
+                    <Route path="/" element={<RootGateway />} />
+                    <Route path="/landing" element={<HomePage />} />
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/signup" element={<SignupPage />} />
                     <Route path="/marketplace" element={<MarketplacePage />} />
@@ -75,6 +77,7 @@ export const App: React.FC = () => {
                       }
                     />
                     <Route path="/buyer" element={<Navigate to="/buyer/dashboard" replace />} />
+                    <Route path="/explore" element={<Navigate to="/buyer/dashboard" replace />} />
 
                     {/* Dedicated Seller Routes */}
                     <Route
@@ -94,13 +97,14 @@ export const App: React.FC = () => {
                       }
                     />
                     <Route
-                      path="/seller/add-listing"
+                      path="/seller/list-waste"
                       element={
                         <RoleRoute allowedRole="SELLER">
                           <SellerAddListingPage />
                         </RoleRoute>
                       }
                     />
+                    <Route path="/seller/add-listing" element={<Navigate to="/seller/list-waste" replace />} />
                     <Route
                       path="/seller/requests"
                       element={
@@ -128,7 +132,7 @@ export const App: React.FC = () => {
                     <Route path="/seller" element={<Navigate to="/seller/dashboard" replace />} />
 
                     {/* Redirects & Legacy paths */}
-                    <Route path="/list-waste" element={<Navigate to="/seller/add-listing" replace />} />
+                    <Route path="/list-waste" element={<Navigate to="/seller/list-waste" replace />} />
 
                     {/* Shared Authenticated Routes */}
                     <Route

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { MaterialListing } from '../types';
-import { MapPin, Heart, ArrowRight, ShieldCheck, Tag, Camera } from 'lucide-react';
+import { MapPin, Heart, ArrowRight, ShieldCheck, Tag, Camera, MessageSquare } from 'lucide-react';
 import { EditListingModal } from './EditListingModal';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -183,14 +183,24 @@ export const MarketplaceCard: React.FC<MarketplaceCardProps> = ({ listing, isSav
             </div>
           </div>
 
-          {/* View Details Button */}
-          <Link
-            to={`/materials/${currentListing.id}`}
-            className="mt-4 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs bg-slate-900 dark:bg-emerald-600 text-white hover:bg-emerald-600 dark:hover:bg-emerald-500 transition-all group/btn shadow-sm active:scale-[0.98]"
-          >
-            <span>View Details & Request</span>
-            <ArrowRight className="w-3.5 h-3.5 group-hover/btn:translate-x-1 transition-transform" />
-          </Link>
+          {/* Action Buttons: Chat with Seller & View Details */}
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <Link
+              to={`/messages?sellerId=${currentListing.sellerId || (currentListing.seller as any)?.id}&materialId=${currentListing.id}`}
+              className="inline-flex items-center justify-center gap-1.5 px-2.5 py-2.5 rounded-xl font-bold text-xs bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white transition-all shadow-xs active:scale-[0.98] text-center"
+              title="Chat and negotiate directly with the seller"
+            >
+              <MessageSquare className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">Chat Seller</span>
+            </Link>
+            <Link
+              to={`/materials/${currentListing.id}`}
+              className="inline-flex items-center justify-center gap-1 px-2.5 py-2.5 rounded-xl font-bold text-xs bg-slate-900 dark:bg-ecoDark-surface hover:bg-slate-800 dark:hover:bg-ecoDark-hover text-white dark:text-slate-100 border border-transparent dark:border-emerald-500/20 transition-all active:scale-[0.98] text-center"
+            >
+              <span>Details</span>
+              <ArrowRight className="w-3.5 h-3.5 shrink-0" />
+            </Link>
+          </div>
         </div>
       </motion.div>
 

@@ -159,31 +159,46 @@ export const Navbar: React.FC = () => {
                   }`}
                 >
                   <LayoutDashboard className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                  <span>Home / Explore</span>
+                  <span>Home</span>
                 </Link>
 
                 <Link
-                  to="/marketplace"
-                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                    isActive('/marketplace')
-                      ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border dark:border-emerald-500/30'
-                      : 'text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-ecoDark-surface'
-                  }`}
+                  to="/buyer/dashboard#explore"
+                  onClick={() => {
+                    if (location.pathname === '/buyer/dashboard') {
+                      document.getElementById('explore')?.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  }}
+                  className="px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-ecoDark-surface"
+                >
+                  <Store className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span>Explore Products</span>
+                </Link>
+
+                <Link
+                  to="/buyer/dashboard#categories"
+                  onClick={() => {
+                    if (location.pathname === '/buyer/dashboard') {
+                      document.getElementById('categories')?.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  }}
+                  className="px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-ecoDark-surface"
+                >
+                  <Layers className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span>Categories</span>
+                </Link>
+
+                <Link
+                  to="/buyer/dashboard#search"
+                  onClick={() => {
+                    if (location.pathname === '/buyer/dashboard') {
+                      document.getElementById('buyer-search-input')?.focus();
+                    }
+                  }}
+                  className="px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-ecoDark-surface"
                 >
                   <Search className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                  <span>Browse Items</span>
-                </Link>
-
-                <Link
-                  to="/buyer/wishlist"
-                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                    isActive('/buyer/wishlist')
-                      ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border dark:border-emerald-500/30'
-                      : 'text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-ecoDark-surface'
-                  }`}
-                >
-                  <Heart className="w-3.5 h-3.5 text-rose-500" />
-                  <span>Wishlist</span>
+                  <span>Search</span>
                 </Link>
 
                 <Link
@@ -196,6 +211,18 @@ export const Navbar: React.FC = () => {
                 >
                   <MessageSquare className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                   <span>Messages</span>
+                </Link>
+
+                <Link
+                  to="/buyer/wishlist"
+                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    isActive('/buyer/wishlist')
+                      ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border dark:border-emerald-500/30'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-ecoDark-surface'
+                  }`}
+                >
+                  <Heart className="w-3.5 h-3.5 text-rose-500" />
+                  <span>Wishlist</span>
                 </Link>
 
                 <Link
@@ -227,6 +254,18 @@ export const Navbar: React.FC = () => {
                 </Link>
 
                 <Link
+                  to="/seller/list-waste"
+                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    isActive('/seller/list-waste') || isActive('/seller/add-listing')
+                      ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border dark:border-emerald-500/30'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-ecoDark-surface'
+                  }`}
+                >
+                  <PlusCircle className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span>List Your Waste</span>
+                </Link>
+
+                <Link
                   to="/seller/listings"
                   className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                     isActive('/seller/listings')
@@ -236,18 +275,6 @@ export const Navbar: React.FC = () => {
                 >
                   <Boxes className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                   <span>My Listings</span>
-                </Link>
-
-                <Link
-                  to="/seller/add-listing"
-                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                    isActive('/seller/add-listing')
-                      ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border dark:border-emerald-500/30'
-                      : 'text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-ecoDark-surface'
-                  }`}
-                >
-                  <PlusCircle className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                  <span>Add New Listing</span>
                 </Link>
 
                 <Link
@@ -271,7 +298,7 @@ export const Navbar: React.FC = () => {
                   }`}
                 >
                   <PackageCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                  <span>Orders / Transactions</span>
+                  <span>Orders</span>
                 </Link>
               </>
             )}
@@ -330,19 +357,24 @@ export const Navbar: React.FC = () => {
             {/* Role-Specific Primary Quick Action Button */}
             {isSeller ? (
               <Link
-                to="/seller/add-listing"
+                to="/seller/list-waste"
                 className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-bold text-xs bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white shadow-md shadow-emerald-700/20 hover:scale-[1.02] active:scale-[0.98] transition-all whitespace-nowrap"
               >
                 <PlusCircle className="w-4 h-4" />
-                <span>Add New Listing</span>
+                <span>List Your Waste</span>
               </Link>
             ) : isBuyer ? (
               <Link
-                to="/marketplace"
+                to="/buyer/dashboard#search"
+                onClick={() => {
+                  if (location.pathname === '/buyer/dashboard') {
+                    document.getElementById('buyer-search-input')?.focus();
+                  }
+                }}
                 className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-bold text-xs bg-forest-900 dark:bg-emerald-600 hover:bg-forest-800 dark:hover:bg-emerald-500 text-white shadow-md shadow-emerald-950/20 hover:scale-[1.02] active:scale-[0.98] transition-all whitespace-nowrap"
               >
                 <Search className="w-4 h-4" />
-                <span>Browse Surplus</span>
+                <span>Search Materials</span>
               </Link>
             ) : null}
 
@@ -619,19 +651,25 @@ export const Navbar: React.FC = () => {
                     to="/buyer/dashboard"
                     className="block px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-ecoDark-surface"
                   >
-                    Home / Explore
+                    Home
                   </Link>
                   <Link
-                    to="/marketplace"
+                    to="/buyer/dashboard#explore"
                     className="block px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-ecoDark-surface"
                   >
-                    Browse Items
+                    Explore Products
                   </Link>
                   <Link
-                    to="/buyer/wishlist"
+                    to="/buyer/dashboard#categories"
                     className="block px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-ecoDark-surface"
                   >
-                    Wishlist
+                    Categories
+                  </Link>
+                  <Link
+                    to="/buyer/dashboard#search"
+                    className="block px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-ecoDark-surface"
+                  >
+                    Search
                   </Link>
                   <Link
                     to="/messages"
@@ -640,10 +678,16 @@ export const Navbar: React.FC = () => {
                     Messages
                   </Link>
                   <Link
+                    to="/buyer/wishlist"
+                    className="block px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-ecoDark-surface"
+                  >
+                    Wishlist
+                  </Link>
+                  <Link
                     to="/orders"
                     className="block px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-ecoDark-surface"
                   >
-                    My Orders / Transactions
+                    My Orders
                   </Link>
                   <Link
                     to="/profile"
@@ -663,16 +707,16 @@ export const Navbar: React.FC = () => {
                     Dashboard
                   </Link>
                   <Link
+                    to="/seller/list-waste"
+                    className="block px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-ecoDark-surface text-emerald-700 dark:text-emerald-400 font-bold"
+                  >
+                    List Your Waste
+                  </Link>
+                  <Link
                     to="/seller/listings"
                     className="block px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-ecoDark-surface"
                   >
                     My Listings
-                  </Link>
-                  <Link
-                    to="/seller/add-listing"
-                    className="block px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-ecoDark-surface text-emerald-700 dark:text-emerald-400 font-bold"
-                  >
-                    + Add New Listing
                   </Link>
                   <Link
                     to="/messages"
@@ -684,7 +728,7 @@ export const Navbar: React.FC = () => {
                     to="/orders"
                     className="block px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-ecoDark-surface"
                   >
-                    Orders / Transactions
+                    Orders
                   </Link>
                   <Link
                     to="/profile"
