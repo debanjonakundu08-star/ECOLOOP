@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams, useLocation } from 'react-router-dom';
 import { api } from '../services/api';
-import { MaterialListing, MaterialRequest } from '../types';
+import { MaterialListing } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { MarketplaceCard } from '../components/MarketplaceCard';
 import {
@@ -10,9 +10,6 @@ import {
   X,
   Layers,
   RefreshCw,
-  Clock,
-  MessageSquare,
-  CreditCard,
   ArrowRight,
   Store,
   ShoppingCart,
@@ -34,9 +31,7 @@ export const BuyerMarketplacePage: React.FC = () => {
 
   // Data State
   const [listings, setListings] = useState<MaterialListing[]>([]);
-  const [requests, setRequests] = useState<MaterialRequest[]>([]);
   const [loadingListings, setLoadingListings] = useState(true);
-  const [loadingRequests, setLoadingRequests] = useState(true);
 
   const categories = [
     'All',
@@ -109,26 +104,9 @@ export const BuyerMarketplacePage: React.FC = () => {
     }
   };
 
-  // Fetch Buyer active purchase offers
-  const fetchActiveOffers = async () => {
-    setLoadingRequests(true);
-    try {
-      const res = await api.requests.getBuyerRequests().catch(() => ({ requests: [] }));
-      setRequests(Array.isArray(res.requests) ? res.requests : []);
-    } catch (err) {
-      console.error('Failed to load buyer requests:', err);
-    } finally {
-      setLoadingRequests(false);
-    }
-  };
-
   useEffect(() => {
     fetchMarketplaceListings();
   }, [selectedCategory, selectedCondition]);
-
-  useEffect(() => {
-    fetchActiveOffers();
-  }, []);
 
   // Handle URL hash navigation e.g. #categories or #search
   useEffect(() => {
@@ -162,10 +140,6 @@ export const BuyerMarketplacePage: React.FC = () => {
       setListings(Array.isArray(res?.listings) ? res.listings : []);
     });
   };
-
-  const activeOffers = requests.filter(
-    (r) => r.status === 'PENDING' || r.status === 'COUNTERED' || r.status === 'NEGOTIATING' || r.status === 'ACCEPTED'
-  );
 
   return (
     <div className="min-h-screen bg-[#F8FAF9] dark:bg-ecoDark-bg py-8 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
@@ -202,81 +176,6 @@ export const BuyerMarketplacePage: React.FC = () => {
             </Link>
           </div>
         </div>
-
-        {/* Active Offers Section */}
-        {activeOffers.length > 0 && (
-          <div className="bg-white dark:bg-ecoDark-surface rounded-3xl p-6 sm:p-8 border border-slate-200/80 dark:border-emerald-500/20 shadow-card space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                <h2 className="text-base font-bold text-slate-900 dark:text-white">
-                  Your Active Purchase Offers & Negotiations ({activeOffers.length})
-                </h2>
-              </div>
-              <Link
-                to="/buyer/dashboard"
-                className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1"
-              >
-                <span>View Full Procurement Dashboard</span>
-                <ArrowRight className="w-3 h-3" />
-              </Link>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {activeOffers.slice(0, 3).map((req) => (
-                <div
-                  key={req.id}
-                  className="p-4 rounded-2xl bg-slate-50 dark:bg-ecoDark-card border border-slate-200/80 dark:border-emerald-950/60 flex flex-col justify-between gap-3"
-                >
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                        {req.material?.title || 'Material Lot'}
-                      </span>
-                      <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                          req.status === 'ACCEPTED'
-                            ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300'
-                            : req.status === 'PENDING'
-                            ? 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300'
-                            : 'bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300'
-                        }`}
-                      >
-                        {req.status}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                      {req.seller?.businessName || req.material?.seller?.businessName || 'Verified Supplier'}
-                    </p>
-                    <div className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 mt-1">
-                      Offer: ₹{req.offeredPrice}/{req.material?.unit || 'kg'} • {req.quantity} {req.material?.unit || 'kg'}
-                    </div>
-                  </div>
-
-                  <div className="pt-2 border-t border-slate-200/60 dark:border-emerald-950 flex items-center justify-end gap-2">
-                    {req.status === 'ACCEPTED' ? (
-                      <Link
-                        to={req.orders && req.orders[0] ? `/checkout/${req.orders[0].id}` : `/orders`}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg font-bold text-xs bg-emerald-600 hover:bg-emerald-500 text-white"
-                      >
-                        <CreditCard className="w-3 h-3" />
-                        <span>Checkout</span>
-                      </Link>
-                    ) : (
-                      <Link
-                        to={`/messages?sellerId=${req.sellerId || req.material?.sellerId}&materialId=${req.materialId}`}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg font-bold text-xs bg-white dark:bg-ecoDark-surface hover:bg-slate-100 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-emerald-900/60"
-                      >
-                        <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
-                        <span>Chat / Negotiate</span>
-                      </Link>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Search Bar Section */}
         <div id="search" className="bg-white dark:bg-ecoDark-surface rounded-3xl p-6 sm:p-8 border border-emerald-100/80 dark:border-emerald-500/20 shadow-card space-y-4">

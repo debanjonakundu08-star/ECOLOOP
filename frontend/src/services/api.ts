@@ -29,38 +29,13 @@ function getMockUser(): User | null {
   return null;
 }
 
-// In-memory / localStorage cache for mock state and user-customized listings
+// Purge legacy per-device localStorage image overrides so PC and mobile both serve from the central backend database / public assets
+try {
+  localStorage.removeItem('ecoloop_edited_listings');
+} catch {}
+
+// Fallback listings from central seed mock data (all 14 listings)
 function getLocalListings(): MaterialListing[] {
-  try {
-    const saved = localStorage.getItem('ecoloop_custom_listings');
-    const editedMap = JSON.parse(localStorage.getItem('ecoloop_edited_listings') || '{}');
-    let baseListings = MOCK_LISTINGS;
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        baseListings = [...parsed, ...MOCK_LISTINGS];
-      }
-    }
-    return baseListings.map((item) => {
-      if (editedMap[item.id]) {
-        const edits = editedMap[item.id];
-        const cleanEditUrl = edits.imageUrl && !isLegacyStockUrl(edits.imageUrl) ? edits.imageUrl : '';
-        return {
-          ...item,
-          ...edits,
-          seller: {
-            ...(item.seller || {}),
-            businessName: edits.companyName || edits.seller?.businessName || item.seller?.businessName || 'Enterprise Partner',
-            city: edits.locationCity || item.seller?.city || 'Kolkata',
-          },
-          images: cleanEditUrl
-            ? [{ id: 'img-edit-' + item.id, listingId: item.id, url: cleanEditUrl, isPrimary: true }]
-            : (edits.images && edits.images.length > 0 ? edits.images : item.images),
-        };
-      }
-      return item;
-    });
-  } catch {}
   return MOCK_LISTINGS;
 }
 
@@ -135,17 +110,11 @@ function getMockFallback<T>(url: string, options: RequestInit = {}): T | null {
       throw new Error('Only the business that listed this item can edit it.');
     }
     const body = options.body ? JSON.parse(options.body as string) : {};
-    try {
-      const editedMap = JSON.parse(localStorage.getItem('ecoloop_edited_listings') || '{}');
-      editedMap[id] = {
-        ...editedMap[id],
-        ...body,
-      };
-      localStorage.setItem('ecoloop_edited_listings', JSON.stringify(editedMap));
-    } catch {
-      throw new Error('Browser storage limit reached. Try using a smaller image or an image URL.');
-    }
-    const updated = getLocalListings().find(m => m.id === id) || existing;
+    const updated = {
+      ...existing,
+      ...body,
+      images: body.imageUrl ? [{ id: 'img-edit-' + id, listingId: id, url: body.imageUrl, isPrimary: true }] : existing.images,
+    };
     return { message: 'Listing updated successfully', listing: updated } as unknown as T;
   }
 
@@ -236,9 +205,6 @@ function getMockFallback<T>(url: string, options: RequestInit = {}): T | null {
       throw err;
     }
     const body = options.body ? JSON.parse(options.body as string) : {};
-    const editedMap = JSON.parse(localStorage.getItem('ecoloop_edited_listings') || '{}');
-    editedMap[id] = { ...(editedMap[id] || {}), ...body };
-    localStorage.setItem('ecoloop_edited_listings', JSON.stringify(editedMap));
 
     try {
       const custom = JSON.parse(localStorage.getItem('ecoloop_custom_listings') || '[]');

@@ -235,9 +235,10 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
 
   const handleResetToDefault = () => {
     try {
-      const editedMap = JSON.parse(localStorage.getItem('ecoloop_edited_listings') || '{}');
-      delete editedMap[listing.id];
-      localStorage.setItem('ecoloop_edited_listings', JSON.stringify(editedMap));
+      localStorage.removeItem('ecoloop_edited_listings');
+      setImageUrl(CATEGORY_IMAGES[listing.category] || '/images/cat-cardboard.jpg');
+      setTitle(listing.title);
+      setCompanyName(listing.seller?.businessName || 'GreenPack Innovations Pvt Ltd');
       window.location.reload();
     } catch {}
   };
