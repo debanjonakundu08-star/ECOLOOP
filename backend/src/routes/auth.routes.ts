@@ -110,69 +110,15 @@ authRouter.post('/signup', async (req: Request, res: Response): Promise<void> =>
 
 authRouter.post('/login', async (req: Request, res: Response): Promise<void> => {
   try {
-    const { email, password, role, sessionId: bodySessionId } = req.body;
+    const { email, password } = req.body;
 
     if (!email || !password) {
       res.status(400).json({ error: 'Please enter both email and password.' });
       return;
     }
 
-    const cleanEmail = email.toLowerCase().trim();
-    const rawSessionId = bodySessionId || (req.headers['x-session-id'] as string) || '';
-    const cleanSessionId = rawSessionId.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 24) || ('sess_' + Math.random().toString(36).slice(2, 8));
-
-    // Check if this is a demo login request
-    const isDemoLogin =
-      cleanEmail === 'purchase@greentechpolymers.in' ||
-      cleanEmail === 'greenpack@ecoloop.com' ||
-      cleanEmail === 'buyer@ecoloop.com' ||
-      cleanEmail === 'seller@ecoloop.com' ||
-      cleanEmail.includes('@demo.ecoloop.com') ||
-      Boolean(req.body.isDemo);
-
-    if (isDemoLogin) {
-      const isSeller = cleanEmail.includes('greenpack') || cleanEmail.includes('seller') || role === 'SELLER';
-      const isolatedDemoEmail = `demo_${isSeller ? 'seller' : 'buyer'}_${cleanSessionId}@ecoloop.com`;
-
-      let user = await prisma.user.findUnique({
-        where: { email: isolatedDemoEmail },
-      });
-
-      if (!user) {
-        const hashedPassword = await bcrypt.hash(password || 'ecoloop123', 10);
-        user = await prisma.user.create({
-          data: {
-            email: isolatedDemoEmail,
-            password: hashedPassword,
-            role: isSeller ? 'SELLER' : 'BUYER',
-            businessName: isSeller ? 'GreenPack Innovations Pvt Ltd' : 'GreenTech Polymers & Recycling',
-            contactPerson: isSeller ? 'Amitav Sen' : 'Siddharth Roy',
-            phone: isSeller ? '+91 98301 23456' : '+91 98312 98765',
-            city: isSeller ? 'Kolkata' : 'Howrah',
-            address: isSeller ? 'Plot 14, Sector V, Salt Lake, Kolkata' : 'Dona Paula Industrial Estate, Howrah',
-            category: isSeller ? 'Packaging' : 'Recycling',
-            bio: isSeller
-              ? 'Leading packaging and carton manufacturer with surplus cardboard offcuts.'
-              : 'State-of-the-art recycling facility reprocessing plastics and industrial residues.',
-            isVerified: true,
-            preferences: {
-              create: {
-                preferredCategories: isSeller
-                  ? 'Paper/Cardboard,Packaging materials,Wood'
-                  : 'Paper/Cardboard,Plastic,Glass',
-                preferredCities: isSeller ? 'Kolkata,Howrah' : 'Howrah,Kolkata',
-              },
-            },
-          },
-        });
-      }
-
-      issueAuthResponse(res, user, 'Demo session authenticated with unique per-user isolation.');
-      return;
-    }
-
     const user = await prisma.user.findUnique({
-      where: { email: cleanEmail },
+      where: { email: email.toLowerCase().trim() },
     });
 
     if (!user) {

@@ -131,8 +131,6 @@ export interface Message {
 
 export interface Conversation {
   id: string;
-  buyerId?: string;
-  sellerId?: string;
   user1Id?: string;
   user2Id?: string;
   otherUser: {

@@ -4,45 +4,18 @@ import { requireAuth, AuthRequest } from '../middleware/auth.js';
 
 export const messagesRouter = Router();
 
-// GET all conversations for current user (strictly scoped to buyerId or sellerId)
+// GET all conversations for current user
 messagesRouter.get('/conversations', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user!.id;
-    const userRole = req.user!.role;
-    const queryRole = (req.query.role as string)?.toUpperCase();
-    const effectiveRole = queryRole === 'BUYER' || queryRole === 'SELLER' ? queryRole : userRole;
 
-    // Strict participant query:
-    // If Buyer: only conversations where buyerId === userId (or participant where not seller)
-    // If Seller: only conversations where sellerId === userId (or participant where not buyer)
-    let whereClause: any;
-    if (effectiveRole === 'BUYER') {
-      whereClause = {
+    const conversations = await prisma.conversation.findMany({
+      where: {
         OR: [
-          { buyerId: userId },
-          { participant1Id: userId, sellerId: { not: userId } },
-        ],
-      };
-    } else if (effectiveRole === 'SELLER') {
-      whereClause = {
-        OR: [
-          { sellerId: userId },
-          { participant2Id: userId, buyerId: { not: userId } },
-        ],
-      };
-    } else {
-      whereClause = {
-        OR: [
-          { buyerId: userId },
-          { sellerId: userId },
           { participant1Id: userId },
           { participant2Id: userId },
         ],
-      };
-    }
-
-    const conversations = await prisma.conversation.findMany({
-      where: whereClause,
+      },
       include: {
         request: {
           include: {
@@ -62,10 +35,9 @@ messagesRouter.get('/conversations', requireAuth, async (req: AuthRequest, res: 
       orderBy: { lastMessageAt: 'desc' },
     });
 
-    // Populate and ensure buyerId/sellerId integrity
+    // Populate the other participant's details
     const populated = await Promise.all(
       conversations.map(async (conv) => {
-        // Resolve other user ID
         const otherUserId = conv.participant1Id === userId ? conv.participant2Id : conv.participant1Id;
         const otherUser = await prisma.user.findUnique({
           where: { id: otherUserId },
@@ -74,31 +46,9 @@ messagesRouter.get('/conversations', requireAuth, async (req: AuthRequest, res: 
             businessName: true,
             city: true,
             category: true,
-            role: true,
             isVerified: true,
           },
         });
-
-        // Determine buyerId and sellerId if missing
-        let resolvedBuyerId = conv.buyerId;
-        let resolvedSellerId = conv.sellerId;
-        if (!resolvedBuyerId || !resolvedSellerId) {
-          if (conv.request) {
-            resolvedBuyerId = conv.request.buyerId;
-            resolvedSellerId = conv.request.sellerId;
-          } else if (conv.material) {
-            resolvedSellerId = conv.material.sellerId;
-            resolvedBuyerId = conv.participant1Id === conv.material.sellerId ? conv.participant2Id : conv.participant1Id;
-          } else if (otherUser) {
-            if (otherUser.role === 'SELLER') {
-              resolvedSellerId = otherUserId;
-              resolvedBuyerId = userId;
-            } else {
-              resolvedBuyerId = otherUserId;
-              resolvedSellerId = userId;
-            }
-          }
-        }
 
         // Count unread messages
         const unreadCount = await prisma.message.count({
@@ -111,10 +61,6 @@ messagesRouter.get('/conversations', requireAuth, async (req: AuthRequest, res: 
 
         return {
           id: conv.id,
-          buyerId: resolvedBuyerId,
-          sellerId: resolvedSellerId,
-          user1Id: conv.participant1Id,
-          user2Id: conv.participant2Id,
           otherUser,
           lastMessage: conv.messages[0]?.content || conv.lastMessage || 'No messages yet',
           lastMessageAt: conv.messages[0]?.createdAt || conv.lastMessageAt,
@@ -132,7 +78,7 @@ messagesRouter.get('/conversations', requireAuth, async (req: AuthRequest, res: 
   }
 });
 
-// GET messages in a conversation (with strict authorization guard)
+// GET messages in a conversation
 messagesRouter.get('/conversation/:id', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const convId = req.params.id;
@@ -157,15 +103,8 @@ messagesRouter.get('/conversation/:id', requireAuth, async (req: AuthRequest, re
       return;
     }
 
-    // Strict participant guard: only buyer or seller of this conversation can view
-    const isParticipant =
-      conversation.buyerId === userId ||
-      conversation.sellerId === userId ||
-      conversation.participant1Id === userId ||
-      conversation.participant2Id === userId;
-
-    if (!isParticipant) {
-      res.status(403).json({ error: 'Access denied: You are not authorized to view this private conversation.' });
+    if (conversation.participant1Id !== userId && conversation.participant2Id !== userId) {
+      res.status(403).json({ error: 'Unauthorized to view this conversation.' });
       return;
     }
 
@@ -184,7 +123,7 @@ messagesRouter.get('/conversation/:id', requireAuth, async (req: AuthRequest, re
       orderBy: { createdAt: 'asc' },
       include: {
         sender: {
-          select: { id: true, businessName: true, city: true, role: true },
+          select: { id: true, businessName: true, city: true },
         },
       },
     });
@@ -192,7 +131,7 @@ messagesRouter.get('/conversation/:id', requireAuth, async (req: AuthRequest, re
     const otherUserId = conversation.participant1Id === userId ? conversation.participant2Id : conversation.participant1Id;
     const otherUser = await prisma.user.findUnique({
       where: { id: otherUserId },
-      select: { id: true, businessName: true, city: true, category: true, role: true, isVerified: true },
+      select: { id: true, businessName: true, city: true, category: true, isVerified: true },
     });
 
     res.json({
@@ -207,12 +146,11 @@ messagesRouter.get('/conversation/:id', requireAuth, async (req: AuthRequest, re
   }
 });
 
-// POST send a message (with strict participant guard and buyer/seller scoping)
+// POST send a message
 messagesRouter.post('/send', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { conversationId, receiverId, content, isNegotiation, proposedPrice, materialId } = req.body;
     const userId = req.user!.id;
-    const userRole = req.user!.role;
 
     if (!content || !content.trim()) {
       res.status(400).json({ error: 'Message content cannot be empty.' });
@@ -221,53 +159,13 @@ messagesRouter.post('/send', requireAuth, async (req: AuthRequest, res: Response
 
     let targetConvId = conversationId;
 
-    if (targetConvId) {
-      const existingConv = await prisma.conversation.findUnique({
-        where: { id: targetConvId },
-      });
-      if (!existingConv) {
-        res.status(404).json({ error: 'Conversation not found.' });
-        return;
-      }
-      const isParticipant =
-        existingConv.buyerId === userId ||
-        existingConv.sellerId === userId ||
-        existingConv.participant1Id === userId ||
-        existingConv.participant2Id === userId;
-
-      if (!isParticipant) {
-        res.status(403).json({ error: 'Unauthorized: You are not a participant in this conversation.' });
-        return;
-      }
-    } else if (receiverId) {
-      let determinedSellerId: string | null = null;
-      let determinedBuyerId: string | null = null;
-
-      if (materialId) {
-        const mat = await prisma.materialListing.findUnique({ where: { id: materialId } });
-        if (mat) {
-          determinedSellerId = mat.sellerId;
-          determinedBuyerId = userId === mat.sellerId ? receiverId : userId;
-        }
-      }
-
-      if (!determinedSellerId || !determinedBuyerId) {
-        if (userRole === 'SELLER') {
-          determinedSellerId = userId;
-          determinedBuyerId = receiverId;
-        } else {
-          determinedBuyerId = userId;
-          determinedSellerId = receiverId;
-        }
-      }
-
-      // Find or create conversation for these participants
+    if (!targetConvId && receiverId) {
+      // Find or create conversation for these participants (and this material if specified)
       let conv = await prisma.conversation.findFirst({
         where: {
           AND: [
             {
               OR: [
-                { buyerId: determinedBuyerId, sellerId: determinedSellerId },
                 { participant1Id: userId, participant2Id: receiverId },
                 { participant1Id: receiverId, participant2Id: userId },
               ],
@@ -280,19 +178,12 @@ messagesRouter.post('/send', requireAuth, async (req: AuthRequest, res: Response
       if (!conv) {
         conv = await prisma.conversation.create({
           data: {
-            buyerId: determinedBuyerId,
-            sellerId: determinedSellerId,
             participant1Id: userId,
             participant2Id: receiverId,
             materialId: materialId || null,
             lastMessage: content.trim(),
             lastMessageAt: new Date(),
           },
-        });
-      } else if (!conv.buyerId || !conv.sellerId) {
-        await prisma.conversation.update({
-          where: { id: conv.id },
-          data: { buyerId: determinedBuyerId, sellerId: determinedSellerId },
         });
       }
       targetConvId = conv.id;
@@ -303,27 +194,10 @@ messagesRouter.post('/send', requireAuth, async (req: AuthRequest, res: Response
       return;
     }
 
-    const conv = await prisma.conversation.findUnique({
-      where: { id: targetConvId },
-      include: {
-        material: {
-          select: { id: true, title: true, category: true },
-        },
-      },
-    });
-
-    if (!conv) {
-      res.status(404).json({ error: 'Conversation not found.' });
-      return;
-    }
-
-    const recipientId = receiverId || (conv.participant1Id === userId ? conv.participant2Id : conv.participant1Id);
-
     const message = await prisma.message.create({
       data: {
         conversationId: targetConvId,
         senderId: userId,
-        receiverId: recipientId,
         content: content.trim(),
         isNegotiation: Boolean(isNegotiation),
         proposedPrice: proposedPrice ? parseFloat(proposedPrice) : null,
@@ -331,12 +205,12 @@ messagesRouter.post('/send', requireAuth, async (req: AuthRequest, res: Response
       },
       include: {
         sender: {
-          select: { id: true, businessName: true, city: true, role: true },
+          select: { id: true, businessName: true, city: true },
         },
       },
     });
 
-    // Update conversation lastMessage & lastMessageAt
+    // Update conversation lastMessageAt
     await prisma.conversation.update({
       where: { id: targetConvId },
       data: {
@@ -345,21 +219,33 @@ messagesRouter.post('/send', requireAuth, async (req: AuthRequest, res: Response
       },
     });
 
-    // Notify recipient
+    // Notify the other participant
     try {
-      const senderName = req.user?.businessName || 'Business Partner';
-      const materialTitle = conv.material?.title || 'Material';
-      const materialCategory = conv.material?.category || 'Surplus';
-
-      await prisma.notification.create({
-        data: {
-          userId: recipientId,
-          title: isNegotiation ? `New Price Negotiation from ${senderName}` : `New Message from ${senderName}`,
-          message: `Company: ${senderName}\nInterested In: ${materialTitle}\nCategory: ${materialCategory}\nMessage: ${content.trim()}${proposedPrice ? `\nProposed Rate: ₹${proposedPrice}` : ''}`,
-          type: isNegotiation ? 'OFFER' : 'MESSAGE',
-          link: `/messages?conversationId=${targetConvId}`,
+      const conv = await prisma.conversation.findUnique({
+        where: { id: targetConvId },
+        include: {
+          material: {
+            select: { id: true, title: true, category: true },
+          },
         },
       });
+
+      if (conv) {
+        const recipientId = conv.participant1Id === userId ? conv.participant2Id : conv.participant1Id;
+        const senderName = req.user?.businessName || 'Business Partner';
+        const materialTitle = conv.material?.title || 'Material';
+        const materialCategory = conv.material?.category || 'Surplus';
+
+        await prisma.notification.create({
+          data: {
+            userId: recipientId,
+            title: isNegotiation ? `New Price Negotiation from ${senderName}` : `New Message from ${senderName}`,
+            message: `Company: ${senderName}\nInterested In: ${materialTitle}\nCategory: ${materialCategory}\nMessage: ${content.trim()}${proposedPrice ? `\nProposed Rate: ₹${proposedPrice}` : ''}`,
+            type: isNegotiation ? 'OFFER' : 'MESSAGE',
+            link: `/messages?conversationId=${targetConvId}`,
+          },
+        });
+      }
     } catch (notifErr) {
       console.error('Failed to create message notification:', notifErr);
     }
