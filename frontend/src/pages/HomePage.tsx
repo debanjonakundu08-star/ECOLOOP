@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { api } from '../services/api';
 import { MaterialListing, ImpactSummary } from '../types';
@@ -21,6 +21,13 @@ import {
 export const HomePage: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  if (user?.role === 'BUYER') {
+    return <Navigate to="/buyer/marketplace" replace />;
+  }
+  if (user?.role === 'SELLER') {
+    return <Navigate to="/seller/dashboard" replace />;
+  }
   const [featuredListings, setFeaturedListings] = useState<MaterialListing[]>([]);
   const [impactData, setImpactData] = useState<ImpactSummary | null>(null);
   const [searchQuery, setSearchQuery] = useState('');

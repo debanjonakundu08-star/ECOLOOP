@@ -86,7 +86,7 @@ export const SignupPage: React.FC = () => {
     setLoading(true);
     try {
       const newUser = await signup({ ...formData, role: selectedRole });
-      const dest = (newUser?.role || selectedRole) === 'SELLER' ? '/seller/dashboard' : '/buyer/dashboard';
+      const dest = (newUser?.role || selectedRole) === 'SELLER' ? '/seller/dashboard' : '/buyer/marketplace';
       navigate(dest, { replace: true });
     } catch (err: any) {
       setError(err.message || 'Failed to create business account.');

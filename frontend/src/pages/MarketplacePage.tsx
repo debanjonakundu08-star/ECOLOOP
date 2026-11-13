@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { api } from '../services/api';
 import { MaterialListing } from '../types';
@@ -18,6 +18,12 @@ import {
 
 export const MarketplacePage: React.FC = () => {
   const { user } = useAuth();
+  if (user?.role === 'BUYER') {
+    return <Navigate to="/buyer/marketplace" replace />;
+  }
+  if (user?.role === 'SELLER') {
+    return <Navigate to="/seller/dashboard" replace />;
+  }
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [listings, setListings] = useState<MaterialListing[]>([]);

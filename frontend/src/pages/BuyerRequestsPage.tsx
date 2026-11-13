@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { MaterialRequest } from '../types';
-import { useInterfaceMode } from '../context/InterfaceModeContext';
 import { getListingPrimaryImage } from '../utils/categoryImages';
 import {
   ShoppingCart,
@@ -25,7 +24,6 @@ import { motion } from 'framer-motion';
 
 export const BuyerRequestsPage: React.FC = () => {
   const navigate = useNavigate();
-  const { switchToSeller } = useInterfaceMode();
   const [requests, setRequests] = useState<MaterialRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'ALL' | 'PENDING' | 'ACCEPTED' | 'COUNTERED' | 'DECLINED'>('ALL');
@@ -81,18 +79,10 @@ export const BuyerRequestsPage: React.FC = () => {
             </p>
           </div>
 
-          {/* Quick link to Switch to Seller Incoming Bids */}
+          {/* Quick link to Marketplace */}
           <div className="flex items-center gap-3 shrink-0">
-            <button
-              onClick={switchToSeller}
-              className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-ecoDark-card text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-emerald-900/40 hover:bg-slate-200/60 dark:hover:bg-ecoDark-hover transition-all flex items-center gap-1.5 cursor-pointer"
-            >
-              <Store className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-              <span>Switch to Incoming Seller Bids</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
             <Link
-              to="/marketplace"
+              to="/buyer/marketplace"
               className="px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white transition-all shadow-sm flex items-center gap-1.5"
             >
               <Search className="w-3.5 h-3.5" />

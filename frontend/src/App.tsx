@@ -20,6 +20,7 @@ import { RequestMaterialPage } from './pages/RequestMaterialPage';
 import { SellerDashboardPage } from './pages/SellerDashboardPage';
 import { SellerRequestsPage } from './pages/SellerRequestsPage';
 import { BuyerDashboardPage } from './pages/BuyerDashboardPage';
+import { BuyerMarketplacePage } from './pages/BuyerMarketplacePage';
 import { BuyerRequestsPage } from './pages/BuyerRequestsPage';
 import { MessagingPage } from './pages/MessagingPage';
 import { OrdersPage } from './pages/OrdersPage';
@@ -53,6 +54,14 @@ export const App: React.FC = () => {
 
                     {/* Dedicated Buyer Routes */}
                     <Route
+                      path="/buyer/marketplace"
+                      element={
+                        <RoleRoute allowedRole="BUYER">
+                          <BuyerMarketplacePage />
+                        </RoleRoute>
+                      }
+                    />
+                    <Route
                       path="/buyer/dashboard"
                       element={
                         <RoleRoute allowedRole="BUYER">
@@ -76,8 +85,8 @@ export const App: React.FC = () => {
                         </RoleRoute>
                       }
                     />
-                    <Route path="/buyer" element={<Navigate to="/buyer/dashboard" replace />} />
-                    <Route path="/explore" element={<Navigate to="/buyer/dashboard" replace />} />
+                    <Route path="/buyer" element={<Navigate to="/buyer/marketplace" replace />} />
+                    <Route path="/explore" element={<Navigate to="/buyer/marketplace" replace />} />
 
                     {/* Dedicated Seller Routes */}
                     <Route

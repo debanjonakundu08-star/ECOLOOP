@@ -1,166 +1,53 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { api } from '../services/api';
-import { MaterialListing, MaterialRequest, Order } from '../types';
+import { MaterialRequest, Order } from '../types';
 import { useAuth } from '../context/AuthContext';
-import { MarketplaceCard } from '../components/MarketplaceCard';
 import {
   ShoppingCart,
-  Search,
-  Filter,
-  SlidersHorizontal,
-  X,
-  Package,
   Clock,
+  Package,
   TrendingDown,
-  Building2,
-  Heart,
   Store,
-  Layers,
-  ArrowRight,
+  Heart,
   MessageSquare,
-  RefreshCw,
-  Tag,
   CreditCard,
-  CheckCircle2,
+  ArrowRight,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export const BuyerDashboardPage: React.FC = () => {
   const { user } = useAuth();
-  const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-
-  // Search & Filter State
-  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
-  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || 'All');
-  const [selectedCondition, setSelectedCondition] = useState('All');
-  const [minPrice, setMinPrice] = useState('');
-  const [maxPrice, setMaxPrice] = useState('');
-  const [showFiltersMobile, setShowFiltersMobile] = useState(false);
 
   // Data State
-  const [listings, setListings] = useState<MaterialListing[]>([]);
   const [requests, setRequests] = useState<MaterialRequest[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [loadingListings, setLoadingListings] = useState(true);
-  const [loadingProcurement, setLoadingProcurement] = useState(true);
-  const [activeTab, setActiveTab] = useState<'marketplace' | 'offers' | 'orders'>('marketplace');
+  const [availableLotsCount, setAvailableLotsCount] = useState<number>(0);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'offers' | 'orders'>('offers');
 
-  const categories = [
-    'All',
-    'Paper/Cardboard',
-    'Plastic',
-    'Metal',
-    'Glass',
-    'Wood',
-    'Textile',
-    'Food waste',
-    'Packaging materials',
-    'Construction materials',
-    'Industrial scrap',
-    'Furniture',
-    'Business equipment',
-  ];
-
-  const conditions = [
-    'All',
-    'Clean / High Grade',
-    'Surplus / Unused',
-    'Minor Defects',
-    'Recyclable / Unsorted',
-    'Scrap',
-  ];
-
-  // Fetch Marketplace listings from database
-  const fetchMarketplaceListings = async () => {
-    setLoadingListings(true);
+  // Fetch Buyer procurement activities and listings count
+  const fetchDashboardData = async () => {
+    setLoading(true);
     try {
-      const params: Record<string, any> = {
-        sort: 'newest',
-      };
-      const cleanSearch = searchQuery.trim();
-      if (cleanSearch) params.search = cleanSearch;
-      if (selectedCategory && selectedCategory !== 'All') params.category = selectedCategory;
-      if (selectedCondition && selectedCondition !== 'All') params.condition = selectedCondition;
-      if (minPrice !== '') params.minPrice = minPrice;
-      if (maxPrice !== '') params.maxPrice = maxPrice;
-
-      const res = await api.materials.getAll(params);
-      const rawList = Array.isArray(res?.listings) ? res.listings : [];
-      // Guarantee strict numeric price and category matching on client state as well:
-      const strictlyFiltered = rawList.filter((item) => {
-        if (selectedCategory && selectedCategory !== 'All') {
-          const sel = selectedCategory.toLowerCase();
-          const itemCat = (item.category || '').toLowerCase();
-          if (sel === 'paper' || sel === 'cardboard' || sel === 'paper/cardboard') {
-            if (!itemCat.includes('paper') && !itemCat.includes('cardboard')) return false;
-          } else if (itemCat !== sel && !itemCat.includes(sel)) {
-            return false;
-          }
-        }
-        const price = Number(item.pricePerUnit);
-        if (minPrice !== '' && !isNaN(parseFloat(minPrice)) && price < parseFloat(minPrice)) {
-          return false;
-        }
-        if (maxPrice !== '' && !isNaN(parseFloat(maxPrice)) && price > parseFloat(maxPrice)) {
-          return false;
-        }
-        return true;
-      });
-      setListings(strictlyFiltered);
-    } catch (err) {
-      console.error('Failed to load marketplace listings for buyer:', err);
-      setListings([]);
-    } finally {
-      setLoadingListings(false);
-    }
-  };
-
-  // Fetch Buyer procurement activities (bids & orders)
-  const fetchProcurementData = async () => {
-    setLoadingProcurement(true);
-    try {
-      const [reqRes, ordRes] = await Promise.all([
+      const [reqRes, ordRes, matRes] = await Promise.all([
         api.requests.getBuyerRequests().catch(() => ({ requests: [] })),
         api.orders.getAll({ role: 'buyer' }).catch(() => ({ orders: [] })),
+        api.materials.getAll({ sort: 'newest' }).catch(() => ({ listings: [] })),
       ]);
       setRequests(Array.isArray(reqRes.requests) ? reqRes.requests : []);
       setOrders(Array.isArray(ordRes.orders) ? ordRes.orders : []);
+      setAvailableLotsCount(Array.isArray(matRes?.listings) ? matRes.listings.length : 0);
     } catch (err) {
-      console.error('Failed to load buyer procurement data:', err);
+      console.error('Failed to load buyer dashboard data:', err);
     } finally {
-      setLoadingProcurement(false);
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchMarketplaceListings();
-  }, [selectedCategory, selectedCondition]);
-
-  useEffect(() => {
-    fetchProcurementData();
+    fetchDashboardData();
   }, []);
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    fetchMarketplaceListings();
-  };
-
-  const handlePriceApply = () => {
-    fetchMarketplaceListings();
-  };
-
-  const handleClearFilters = () => {
-    setSearchQuery('');
-    setSelectedCategory('All');
-    setSelectedCondition('All');
-    setMinPrice('');
-    setMaxPrice('');
-    api.materials.getAll({ sort: 'newest' }).then((res) => {
-      setListings(Array.isArray(res?.listings) ? res.listings : []);
-    });
-  };
 
   const pendingRequests = requests.filter(
     (r) => r.status === 'PENDING' || r.status === 'COUNTERED' || r.status === 'NEGOTIATING'
@@ -191,11 +78,18 @@ export const BuyerDashboardPage: React.FC = () => {
               Buyer Marketplace Dashboard
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-2xl">
-              Discover verified industrial surplus, search recyclable materials by category, chat with sellers directly to negotiate rates, and manage your purchase orders.
+              Track your purchase offers, manage supplier rate negotiations, monitor in-transit deliveries, and review your circular procurement cost savings.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            <Link
+              to="/buyer/marketplace"
+              className="px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white transition-all shadow-sm flex items-center justify-center gap-2"
+            >
+              <Store className="w-4 h-4" />
+              <span>Browse Marketplace</span>
+            </Link>
             <Link
               to="/buyer/wishlist"
               className="px-4 py-2.5 rounded-xl text-xs font-bold bg-white dark:bg-ecoDark-card text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-emerald-800/40 hover:bg-slate-50 transition-all shadow-2xs flex items-center justify-center gap-2"
@@ -205,9 +99,9 @@ export const BuyerDashboardPage: React.FC = () => {
             </Link>
             <Link
               to="/messages"
-              className="px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white transition-all shadow-sm flex items-center justify-center gap-2"
+              className="px-4 py-2.5 rounded-xl text-xs font-bold bg-white dark:bg-ecoDark-card text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-emerald-800/40 hover:bg-slate-50 transition-all shadow-2xs flex items-center justify-center gap-2"
             >
-              <MessageSquare className="w-4 h-4" />
+              <MessageSquare className="w-4 h-4 text-emerald-600" />
               <span>Seller Messages</span>
             </Link>
           </div>
@@ -224,11 +118,15 @@ export const BuyerDashboardPage: React.FC = () => {
               <Store className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-2">
-              {listings.length}
+              {availableLotsCount}
             </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-medium">
-              Verified active listings
-            </p>
+            <Link
+              to="/buyer/marketplace"
+              className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline mt-1 inline-flex items-center gap-1 cursor-pointer"
+            >
+              <span>Explore Marketplace</span>
+              <ArrowRight className="w-3 h-3" />
+            </Link>
           </motion.div>
 
           <motion.div
@@ -236,7 +134,7 @@ export const BuyerDashboardPage: React.FC = () => {
             className="bg-white dark:bg-ecoDark-surface p-5 rounded-2xl border border-slate-200/80 dark:border-emerald-500/20 shadow-card"
           >
             <div className="flex items-center justify-between text-slate-400">
-              <span className="text-xs font-bold uppercase tracking-wider">Active Bids Sent</span>
+              <span className="text-xs font-bold uppercase tracking-wider">Active Purchase Offers</span>
               <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" />
             </div>
             <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-2">
@@ -288,289 +186,54 @@ export const BuyerDashboardPage: React.FC = () => {
           </motion.div>
         </div>
 
-        {/* 3. Navigation View Switcher (Marketplace Catalog / My Purchase Offers / My Orders) */}
-        <div className="flex items-center gap-2 border-b border-slate-200 dark:border-emerald-950 pb-2">
-          <button
-            onClick={() => setActiveTab('marketplace')}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
-              activeTab === 'marketplace'
-                ? 'bg-emerald-700 text-white shadow-sm'
-                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-ecoDark-surface'
-            }`}
-          >
-            <Store className="w-4 h-4" />
-            <span>Explore Products & Materials</span>
-            <span className="px-1.5 py-0.5 rounded text-[10px] bg-white/20 text-white font-black">
-              {listings.length}
-            </span>
-          </button>
+        {/* 3. Navigation View Switcher (My Purchase Offers / My Orders & Inbound Shipments) */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-emerald-950 pb-2">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setActiveTab('offers')}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                activeTab === 'offers'
+                  ? 'bg-emerald-700 text-white shadow-sm'
+                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-ecoDark-surface'
+              }`}
+            >
+              <Clock className="w-4 h-4" />
+              <span>My Purchase Offers</span>
+              {pendingRequests.length > 0 && (
+                <span className="px-1.5 py-0.5 rounded text-[10px] bg-amber-500 text-white font-black">
+                  {pendingRequests.length}
+                </span>
+              )}
+            </button>
 
-          <button
-            onClick={() => setActiveTab('offers')}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
-              activeTab === 'offers'
-                ? 'bg-emerald-700 text-white shadow-sm'
-                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-ecoDark-surface'
-            }`}
-          >
-            <Clock className="w-4 h-4" />
-            <span>My Purchase Offers</span>
-            {pendingRequests.length > 0 && (
-              <span className="px-1.5 py-0.5 rounded text-[10px] bg-amber-500 text-white font-black">
-                {pendingRequests.length}
-              </span>
-            )}
-          </button>
+            <button
+              onClick={() => setActiveTab('orders')}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                activeTab === 'orders'
+                  ? 'bg-emerald-700 text-white shadow-sm'
+                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-ecoDark-surface'
+              }`}
+            >
+              <Package className="w-4 h-4" />
+              <span>My Orders & Inbound Shipments</span>
+              {orders.length > 0 && (
+                <span className="px-1.5 py-0.5 rounded text-[10px] bg-teal-600 text-white font-black">
+                  {orders.length}
+                </span>
+              )}
+            </button>
+          </div>
 
-          <button
-            onClick={() => setActiveTab('orders')}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
-              activeTab === 'orders'
-                ? 'bg-emerald-700 text-white shadow-sm'
-                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-ecoDark-surface'
-            }`}
+          <Link
+            to="/buyer/marketplace"
+            className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 self-start sm:self-auto"
           >
-            <Package className="w-4 h-4" />
-            <span>My Orders & Inbound Shipments</span>
-            {orders.length > 0 && (
-              <span className="px-1.5 py-0.5 rounded text-[10px] bg-teal-600 text-white font-black">
-                {orders.length}
-              </span>
-            )}
-          </button>
+            <span>+ Find New Material Lots in Marketplace</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
         </div>
 
-        {/* VIEW 1: Full Marketplace Catalog with Search & Filters */}
-        {activeTab === 'marketplace' && (
-          <div className="space-y-6">
-            {/* Search Bar Section */}
-            <div id="search" className="bg-white dark:bg-ecoDark-surface rounded-3xl p-6 sm:p-8 border border-emerald-100/80 dark:border-emerald-500/20 shadow-card space-y-4">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                  <h2 className="text-lg font-black text-slate-900 dark:text-white">
-                    Search Surplus Feedstock & Materials
-                  </h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Query real-time inventory from regional factories, recyclers, and commercial generators.
-                  </p>
-                </div>
-
-                {/* Quick suggestions */}
-                <div className="flex flex-wrap items-center gap-1.5 text-xs">
-                  <span className="text-[11px] font-bold text-slate-400">Quick queries:</span>
-                  {['Plastic Waste', 'Cardboard', 'Steel Scrap', 'Wood Pallets'].map((tag) => (
-                    <button
-                      key={tag}
-                      type="button"
-                      onClick={() => {
-                        setSearchQuery(tag);
-                        api.materials.getAll({ search: tag, sort: 'newest' }).then((res) => {
-                          setListings(Array.isArray(res?.listings) ? res.listings : []);
-                        });
-                      }}
-                      className="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-100 dark:bg-ecoDark-card text-slate-600 dark:text-slate-300 hover:bg-emerald-50 hover:text-emerald-700 transition-colors cursor-pointer"
-                    >
-                      {tag}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Main Search Input */}
-              <form onSubmit={handleSearchSubmit} className="relative flex items-center">
-                <div className="relative flex-1 flex items-center">
-                  <Search className="w-5 h-5 text-slate-400 ml-4 absolute pointer-events-none" />
-                  <input
-                    id="buyer-search-input"
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search by material title, description, e.g. 'Plastic Waste', 'HDPE Regrind', 'Steel Scrap'..."
-                    className="w-full pl-12 pr-10 py-3.5 rounded-2xl border border-slate-200 dark:border-emerald-500/20 bg-slate-50/50 dark:bg-ecoDark-bg text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent placeholder:text-slate-400 transition-all"
-                  />
-                  {searchQuery && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSearchQuery('');
-                        fetchMarketplaceListings();
-                      }}
-                      className="absolute right-3 p-1 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-                <button
-                  type="submit"
-                  className="ml-3 px-6 py-3.5 rounded-2xl font-bold text-xs bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white shadow-md shadow-emerald-900/20 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer whitespace-nowrap"
-                >
-                  Search Listings
-                </button>
-              </form>
-            </div>
-
-            {/* Category Filter Pills Carousel */}
-            <div id="categories" className="space-y-2">
-              <div className="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400 px-1">
-                <span className="flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
-                  <Layers className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Filter by Material Category</span>
-                </span>
-                {(selectedCategory !== 'All' || selectedCondition !== 'All' || minPrice || maxPrice || searchQuery) && (
-                  <button
-                    onClick={handleClearFilters}
-                    className="text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer font-semibold text-xs"
-                  >
-                    <RefreshCw className="w-3 h-3" />
-                    <span>Reset All Filters</span>
-                  </button>
-                )}
-              </div>
-
-              <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-                {categories.map((cat) => (
-                  <button
-                    key={cat}
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
-                      selectedCategory === cat
-                        ? 'bg-emerald-700 text-white shadow-sm'
-                        : 'bg-white dark:bg-ecoDark-surface text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-emerald-500/20 hover:bg-emerald-50 hover:text-emerald-800'
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Secondary Filter Controls (Condition & Price Range) */}
-            <div className="bg-white dark:bg-ecoDark-surface rounded-2xl p-4 border border-slate-200/80 dark:border-emerald-500/20 flex flex-wrap items-center justify-between gap-4 text-xs">
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 font-bold text-xs">
-                  <Filter className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Condition:</span>
-                </div>
-                <select
-                  value={selectedCondition}
-                  onChange={(e) => setSelectedCondition(e.target.value)}
-                  className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-emerald-900/60 bg-slate-50 dark:bg-ecoDark-card text-slate-800 dark:text-slate-200 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                >
-                  {conditions.map((cond) => (
-                    <option key={cond} value={cond}>
-                      {cond}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span className="text-slate-500 dark:text-slate-400 font-bold text-xs">Price Range (₹):</span>
-                <input
-                  type="number"
-                  placeholder="Min"
-                  value={minPrice}
-                  onChange={(e) => setMinPrice(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handlePriceApply()}
-                  className="w-20 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-emerald-900/60 bg-slate-50 dark:bg-ecoDark-card text-slate-800 dark:text-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                />
-                <span className="text-slate-400">-</span>
-                <input
-                  type="number"
-                  placeholder="Max"
-                  value={maxPrice}
-                  onChange={(e) => setMaxPrice(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handlePriceApply()}
-                  className="w-20 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-emerald-900/60 bg-slate-50 dark:bg-ecoDark-card text-slate-800 dark:text-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                />
-                <button
-                  type="button"
-                  onClick={handlePriceApply}
-                  className="px-3 py-1.5 rounded-xl font-bold bg-emerald-600 hover:bg-emerald-700 text-white text-xs transition-colors cursor-pointer"
-                >
-                  Apply
-                </button>
-                {(minPrice !== '' || maxPrice !== '') && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMinPrice('');
-                      setMaxPrice('');
-                      const params: Record<string, any> = { sort: 'newest' };
-                      if (searchQuery.trim()) params.search = searchQuery.trim();
-                      if (selectedCategory && selectedCategory !== 'All') params.category = selectedCategory;
-                      if (selectedCondition && selectedCondition !== 'All') params.condition = selectedCondition;
-                      api.materials.getAll(params).then((res) => {
-                        setListings(Array.isArray(res?.listings) ? res.listings : []);
-                      });
-                    }}
-                    className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
-                    title="Clear price filter"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Results Header */}
-            <div id="explore" className="flex items-center justify-between text-xs">
-              <span className="font-bold text-slate-900 dark:text-white">
-                Showing {listings.length} available waste listing{listings.length !== 1 ? 's' : ''}
-                {selectedCategory !== 'All' ? ` in ${selectedCategory}` : ''}
-                {searchQuery ? ` matching "${searchQuery}"` : ''}
-              </span>
-              <span className="text-slate-400 text-[11px]">
-                Click "Chat Seller" on any card to initiate direct pricing discussion
-              </span>
-            </div>
-
-            {/* Material Cards Grid */}
-            {loadingListings ? (
-              <div className="py-20 text-center space-y-3">
-                <div className="w-10 h-10 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto" />
-                <p className="text-xs font-semibold text-slate-400">Loading marketplace listings...</p>
-              </div>
-            ) : listings.length === 0 ? (
-              <div className="py-16 text-center space-y-3 bg-white dark:bg-ecoDark-surface rounded-3xl border border-dashed border-slate-200 dark:border-emerald-900/60 p-8">
-                <Store className="w-12 h-12 text-slate-400 mx-auto" />
-                <h3 className="text-base font-bold text-slate-800 dark:text-slate-200">
-                  {minPrice !== '' || maxPrice !== ''
-                    ? selectedCategory !== 'All'
-                      ? 'No products found matching your filter criteria.'
-                      : 'No products found within this price range.'
-                    : selectedCategory !== 'All'
-                    ? 'No items available in this category right now.'
-                    : searchQuery.trim()
-                    ? `No products found matching "${searchQuery}".`
-                    : 'No materials match your search criteria'}
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-                  {minPrice !== '' || maxPrice !== ''
-                    ? `No listings available in the ₹${minPrice || '1'}–₹${maxPrice || '∞'} range. Try broadening your price boundaries.`
-                    : selectedCategory !== 'All'
-                    ? `There are currently no listings published under ${selectedCategory}. Choose another category or check back soon.`
-                    : 'Try clearing your filters or searching for another material like "Paper/Cardboard" or "Plastic".'}
-                </p>
-                <button
-                  onClick={handleClearFilters}
-                  className="px-5 py-2.5 rounded-xl font-bold text-xs bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer transition-colors"
-                >
-                  Reset All Filters
-                </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
-                {listings.map((listing) => (
-                  <MarketplaceCard key={listing.id} listing={listing} />
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* VIEW 2: My Active Purchase Offers */}
+        {/* VIEW 1: My Purchase Offers & Negotiations */}
         {activeTab === 'offers' && (
           <div className="bg-white dark:bg-ecoDark-surface rounded-3xl p-6 sm:p-8 border border-slate-200/80 dark:border-emerald-500/20 shadow-card space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -579,18 +242,19 @@ export const BuyerDashboardPage: React.FC = () => {
                   My Purchase Offers & Negotiations
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  Offers submitted to material sellers. Click "Negotiate / Chat" to discuss terms.
+                  Offers submitted to material generators and sellers. Click "Chat / Negotiate" to discuss terms and confirm pickup.
                 </p>
               </div>
-              <button
-                onClick={() => setActiveTab('marketplace')}
-                className="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-700 text-white hover:bg-emerald-800"
+              <Link
+                to="/buyer/marketplace"
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-700 text-white hover:bg-emerald-800 transition-colors inline-flex items-center gap-1.5"
               >
-                + Browse More Materials
-              </button>
+                <Store className="w-3.5 h-3.5" />
+                <span>+ Browse Materials</span>
+              </Link>
             </div>
 
-            {loadingProcurement ? (
+            {loading ? (
               <div className="py-12 text-center text-xs font-semibold text-slate-400 animate-pulse">
                 Loading your purchase offers...
               </div>
@@ -601,14 +265,14 @@ export const BuyerDashboardPage: React.FC = () => {
                   No Purchase Offers Sent Yet
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-                  Explore available products and click "Chat Seller" or make an offer to start procurement discussions.
+                  Explore available products in the marketplace and click "Chat Seller" to start procurement discussions.
                 </p>
-                <button
-                  onClick={() => setActiveTab('marketplace')}
-                  className="px-5 py-2.5 rounded-xl font-bold text-xs bg-emerald-600 text-white"
+                <Link
+                  to="/buyer/marketplace"
+                  className="px-5 py-2.5 rounded-xl font-bold text-xs bg-emerald-600 text-white inline-block mt-2"
                 >
-                  Explore Products
-                </button>
+                  Explore Marketplace
+                </Link>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -700,7 +364,7 @@ export const BuyerDashboardPage: React.FC = () => {
           </div>
         )}
 
-        {/* VIEW 3: My Orders & Fulfilments */}
+        {/* VIEW 2: My Orders & Inbound Shipments */}
         {activeTab === 'orders' && (
           <div className="bg-white dark:bg-ecoDark-surface rounded-3xl p-6 sm:p-8 border border-slate-200/80 dark:border-emerald-500/20 shadow-card space-y-6">
             <div className="flex items-center justify-between">

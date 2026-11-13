@@ -62,7 +62,7 @@ export const LoginPage: React.FC = () => {
       const loggedUser = await login(email, password, selectedRole);
       const destination = (loggedUser.role || selectedRole) === 'SELLER'
         ? '/seller/dashboard'
-        : '/buyer/dashboard';
+        : '/buyer/marketplace';
       navigate(destination, { replace: true });
     } catch (err: any) {
       setError(err.message || 'Failed to login. Please verify your business credentials.');

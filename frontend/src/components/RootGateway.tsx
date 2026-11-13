@@ -26,7 +26,7 @@ export const RootGateway: React.FC = () => {
     if (user.role === 'SELLER') {
       return <Navigate to="/seller/dashboard" replace />;
     }
-    return <Navigate to="/buyer/dashboard" replace />;
+    return <Navigate to="/buyer/marketplace" replace />;
   }
 
   return <LoginPage />;
