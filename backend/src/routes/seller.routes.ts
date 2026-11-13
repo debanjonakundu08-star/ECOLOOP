@@ -52,11 +52,21 @@ sellerRouter.get('/dashboard', requireAuth, async (req: AuthRequest, res: Respon
     const recentRequests = await prisma.materialRequest.findMany({
       where: { sellerId },
       include: {
-        material: { select: { id: true, title: true, unit: true, pricePerUnit: true } },
+        material: { select: { id: true, title: true, category: true, unit: true, pricePerUnit: true } },
         buyer: { select: { id: true, businessName: true, city: true, category: true } },
       },
       orderBy: { createdAt: 'desc' },
-      take: 5,
+      take: 10,
+    });
+
+    // 2b. Seller Notifications
+    const notifications = await prisma.notification.findMany({
+      where: { userId: sellerId },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+    });
+    const unreadNotificationsCount = await prisma.notification.count({
+      where: { userId: sellerId, isRead: false },
     });
 
     // 3. Recent listings
@@ -128,6 +138,8 @@ sellerRouter.get('/dashboard', requireAuth, async (req: AuthRequest, res: Respon
         totalRevenue: Math.round(totalRevenue),
       },
       recentRequests,
+      notifications,
+      unreadNotificationsCount,
       myListings,
       recentOrders,
       analytics: {

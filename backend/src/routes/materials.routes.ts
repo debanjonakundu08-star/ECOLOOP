@@ -18,37 +18,92 @@ materialsRouter.get('/', async (req: AuthRequest, res: Response): Promise<void> 
       status = 'ACTIVE',
     } = req.query;
 
-    const where: any = {
-      status: String(status),
-    };
+    const andConditions: any[] = [
+      { status: String(status) }
+    ];
 
-    if (category && category !== 'All') {
-      where.category = String(category);
+    if (category && category !== 'All' && String(category).trim() !== '') {
+      const catStr = String(category).trim();
+      if (
+        catStr.toLowerCase() === 'paper' ||
+        catStr.toLowerCase() === 'cardboard' ||
+        catStr.toLowerCase() === 'paper/cardboard'
+      ) {
+        andConditions.push({
+          OR: [
+            { category: 'Paper/Cardboard' },
+            { category: 'Paper' },
+            { category: 'Cardboard' },
+            { category: { contains: 'Paper' } },
+            { category: { contains: 'Cardboard' } },
+          ],
+        });
+      } else {
+        andConditions.push({
+          category: {
+            equals: catStr,
+          },
+        });
+      }
     }
 
-    if (city && city !== 'All') {
-      where.locationCity = { contains: String(city) };
+    if (city && city !== 'All' && String(city).trim() !== '') {
+      andConditions.push({
+        locationCity: { contains: String(city).trim() },
+      });
     }
 
-    if (condition && condition !== 'All') {
-      where.condition = String(condition);
+    if (condition && condition !== 'All' && String(condition).trim() !== '') {
+      andConditions.push({
+        condition: String(condition).trim(),
+      });
     }
 
-    if (minPrice || maxPrice) {
-      where.pricePerUnit = {};
-      if (minPrice) where.pricePerUnit.gte = parseFloat(String(minPrice));
-      if (maxPrice) where.pricePerUnit.lte = parseFloat(String(maxPrice));
+    const parsedMin =
+      minPrice !== undefined && minPrice !== null && String(minPrice).trim() !== ''
+        ? parseFloat(String(minPrice))
+        : NaN;
+    const parsedMax =
+      maxPrice !== undefined && maxPrice !== null && String(maxPrice).trim() !== ''
+        ? parseFloat(String(maxPrice))
+        : NaN;
+
+    if (!isNaN(parsedMin) && !isNaN(parsedMax)) {
+      andConditions.push({
+        pricePerUnit: {
+          gte: parsedMin,
+          lte: parsedMax,
+        },
+      });
+    } else if (!isNaN(parsedMin)) {
+      andConditions.push({
+        pricePerUnit: {
+          gte: parsedMin,
+        },
+      });
+    } else if (!isNaN(parsedMax)) {
+      andConditions.push({
+        pricePerUnit: {
+          lte: parsedMax,
+        },
+      });
     }
 
-    if (search) {
+    if (search && String(search).trim() !== '') {
       const q = String(search).trim();
-      where.OR = [
-        { title: { contains: q } },
-        { description: { contains: q } },
-        { category: { contains: q } },
-        { locationCity: { contains: q } },
-      ];
+      andConditions.push({
+        OR: [
+          { title: { contains: q } },
+          { description: { contains: q } },
+          { category: { contains: q } },
+          { locationCity: { contains: q } },
+        ],
+      });
     }
+
+    const where = {
+      AND: andConditions,
+    };
 
     let orderBy: any = { createdAt: 'desc' };
     if (sort === 'price_asc') orderBy = { pricePerUnit: 'asc' };

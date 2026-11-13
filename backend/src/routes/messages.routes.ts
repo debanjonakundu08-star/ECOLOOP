@@ -219,6 +219,37 @@ messagesRouter.post('/send', requireAuth, async (req: AuthRequest, res: Response
       },
     });
 
+    // Notify the other participant
+    try {
+      const conv = await prisma.conversation.findUnique({
+        where: { id: targetConvId },
+        include: {
+          material: {
+            select: { id: true, title: true, category: true },
+          },
+        },
+      });
+
+      if (conv) {
+        const recipientId = conv.participant1Id === userId ? conv.participant2Id : conv.participant1Id;
+        const senderName = req.user?.businessName || 'Business Partner';
+        const materialTitle = conv.material?.title || 'Material';
+        const materialCategory = conv.material?.category || 'Surplus';
+
+        await prisma.notification.create({
+          data: {
+            userId: recipientId,
+            title: isNegotiation ? `New Price Negotiation from ${senderName}` : `New Message from ${senderName}`,
+            message: `Company: ${senderName}\nInterested In: ${materialTitle}\nCategory: ${materialCategory}\nMessage: ${content.trim()}${proposedPrice ? `\nProposed Rate: ₹${proposedPrice}` : ''}`,
+            type: isNegotiation ? 'OFFER' : 'MESSAGE',
+            link: `/messages?conversationId=${targetConvId}`,
+          },
+        });
+      }
+    } catch (notifErr) {
+      console.error('Failed to create message notification:', notifErr);
+    }
+
     res.status(201).json({ message });
   } catch (error) {
     console.error('Send message error:', error);

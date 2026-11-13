@@ -83,11 +83,32 @@ export const BuyerDashboardPage: React.FC = () => {
       if (cleanSearch) params.search = cleanSearch;
       if (selectedCategory && selectedCategory !== 'All') params.category = selectedCategory;
       if (selectedCondition && selectedCondition !== 'All') params.condition = selectedCondition;
-      if (minPrice) params.minPrice = minPrice;
-      if (maxPrice) params.maxPrice = maxPrice;
+      if (minPrice !== '') params.minPrice = minPrice;
+      if (maxPrice !== '') params.maxPrice = maxPrice;
 
       const res = await api.materials.getAll(params);
-      setListings(Array.isArray(res?.listings) ? res.listings : []);
+      const rawList = Array.isArray(res?.listings) ? res.listings : [];
+      // Guarantee strict numeric price and category matching on client state as well:
+      const strictlyFiltered = rawList.filter((item) => {
+        if (selectedCategory && selectedCategory !== 'All') {
+          const sel = selectedCategory.toLowerCase();
+          const itemCat = (item.category || '').toLowerCase();
+          if (sel === 'paper' || sel === 'cardboard' || sel === 'paper/cardboard') {
+            if (!itemCat.includes('paper') && !itemCat.includes('cardboard')) return false;
+          } else if (itemCat !== sel && !itemCat.includes(sel)) {
+            return false;
+          }
+        }
+        const price = Number(item.pricePerUnit);
+        if (minPrice !== '' && !isNaN(parseFloat(minPrice)) && price < parseFloat(minPrice)) {
+          return false;
+        }
+        if (maxPrice !== '' && !isNaN(parseFloat(maxPrice)) && price > parseFloat(maxPrice)) {
+          return false;
+        }
+        return true;
+      });
+      setListings(strictlyFiltered);
     } catch (err) {
       console.error('Failed to load marketplace listings for buyer:', err);
       setListings([]);
@@ -451,6 +472,7 @@ export const BuyerDashboardPage: React.FC = () => {
                   placeholder="Min"
                   value={minPrice}
                   onChange={(e) => setMinPrice(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handlePriceApply()}
                   className="w-20 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-emerald-900/60 bg-slate-50 dark:bg-ecoDark-card text-slate-800 dark:text-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 />
                 <span className="text-slate-400">-</span>
@@ -459,6 +481,7 @@ export const BuyerDashboardPage: React.FC = () => {
                   placeholder="Max"
                   value={maxPrice}
                   onChange={(e) => setMaxPrice(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handlePriceApply()}
                   className="w-20 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-emerald-900/60 bg-slate-50 dark:bg-ecoDark-card text-slate-800 dark:text-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 />
                 <button
@@ -468,6 +491,26 @@ export const BuyerDashboardPage: React.FC = () => {
                 >
                   Apply
                 </button>
+                {(minPrice !== '' || maxPrice !== '') && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMinPrice('');
+                      setMaxPrice('');
+                      const params: Record<string, any> = { sort: 'newest' };
+                      if (searchQuery.trim()) params.search = searchQuery.trim();
+                      if (selectedCategory && selectedCategory !== 'All') params.category = selectedCategory;
+                      if (selectedCondition && selectedCondition !== 'All') params.condition = selectedCondition;
+                      api.materials.getAll(params).then((res) => {
+                        setListings(Array.isArray(res?.listings) ? res.listings : []);
+                      });
+                    }}
+                    className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                    title="Clear price filter"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
             </div>
 
@@ -493,16 +536,28 @@ export const BuyerDashboardPage: React.FC = () => {
               <div className="py-16 text-center space-y-3 bg-white dark:bg-ecoDark-surface rounded-3xl border border-dashed border-slate-200 dark:border-emerald-900/60 p-8">
                 <Store className="w-12 h-12 text-slate-400 mx-auto" />
                 <h3 className="text-base font-bold text-slate-800 dark:text-slate-200">
-                  No materials match your search criteria
+                  {minPrice !== '' || maxPrice !== ''
+                    ? selectedCategory !== 'All'
+                      ? 'No products found matching your filter criteria.'
+                      : 'No products found within this price range.'
+                    : selectedCategory !== 'All'
+                    ? 'No items available in this category right now.'
+                    : searchQuery.trim()
+                    ? `No products found matching "${searchQuery}".`
+                    : 'No materials match your search criteria'}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-                  Try clearing your search query or choosing another category like "Paper/Cardboard" or "Plastic".
+                  {minPrice !== '' || maxPrice !== ''
+                    ? `No listings available in the ₹${minPrice || '1'}–₹${maxPrice || '∞'} range. Try broadening your price boundaries.`
+                    : selectedCategory !== 'All'
+                    ? `There are currently no listings published under ${selectedCategory}. Choose another category or check back soon.`
+                    : 'Try clearing your filters or searching for another material like "Paper/Cardboard" or "Plastic".'}
                 </p>
                 <button
                   onClick={handleClearFilters}
                   className="px-5 py-2.5 rounded-xl font-bold text-xs bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer transition-colors"
                 >
-                  Reset Search & Filters
+                  Reset All Filters
                 </button>
               </div>
             ) : (

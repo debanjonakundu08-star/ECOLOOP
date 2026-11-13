@@ -24,6 +24,7 @@ export const MessagingPage: React.FC = () => {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const recipientId = searchParams.get('sellerId') || searchParams.get('recipient');
+  const directConvId = searchParams.get('conversationId');
   const materialId = searchParams.get('materialId');
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -56,14 +57,29 @@ export const MessagingPage: React.FC = () => {
     }
   }, [materialId]);
 
+  const selectConversation = async (convId: string) => {
+    try {
+      const res = await api.messages.getConversation(convId);
+      setActiveConv(res.conversation);
+      setMessages(Array.isArray(res.messages) ? res.messages : []);
+      if (res.conversation?.material) {
+        setReferencedMaterial(res.conversation.material);
+      }
+      scrollToBottom();
+    } catch (err) {
+      console.error('Failed to load messages for conversation:', err);
+    }
+  };
+
   const loadConversations = async (autoSelectId?: string) => {
     try {
       const res = await api.messages.getConversations();
       const convList = Array.isArray(res.conversations) ? res.conversations : [];
       setConversations(convList);
 
-      if (autoSelectId) {
-        selectConversation(autoSelectId);
+      const targetId = autoSelectId || directConvId;
+      if (targetId) {
+        selectConversation(targetId);
       } else if (convList.length > 0 && !activeConv) {
         // If recipientId is specified, check if existing conversation with that user exists
         if (recipientId) {
@@ -84,23 +100,9 @@ export const MessagingPage: React.FC = () => {
     }
   };
 
-  const selectConversation = async (convId: string) => {
-    try {
-      const res = await api.messages.getConversation(convId);
-      setActiveConv(res.conversation);
-      setMessages(Array.isArray(res.messages) ? res.messages : []);
-      if (res.conversation?.material) {
-        setReferencedMaterial(res.conversation.material);
-      }
-      scrollToBottom();
-    } catch (err) {
-      console.error('Failed to load messages for conversation:', err);
-    }
-  };
-
   useEffect(() => {
-    loadConversations();
-  }, [recipientId]);
+    loadConversations(directConvId || undefined);
+  }, [recipientId, directConvId]);
 
   useEffect(() => {
     scrollToBottom();

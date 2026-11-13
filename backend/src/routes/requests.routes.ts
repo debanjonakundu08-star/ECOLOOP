@@ -60,12 +60,17 @@ requestsRouter.post('/', requireAuth, async (req: AuthRequest, res: Response): P
       },
     });
 
-    // Create or find conversation
+    // Create or find conversation linked to this material, buyer, and seller
     let conversation = await prisma.conversation.findFirst({
       where: {
-        OR: [
-          { participant1Id: req.user!.id, participant2Id: material.sellerId },
-          { participant1Id: material.sellerId, participant2Id: req.user!.id },
+        AND: [
+          {
+            OR: [
+              { participant1Id: req.user!.id, participant2Id: material.sellerId },
+              { participant1Id: material.sellerId, participant2Id: req.user!.id },
+            ],
+          },
+          { materialId: material.id },
         ],
       },
     });
@@ -75,6 +80,16 @@ requestsRouter.post('/', requireAuth, async (req: AuthRequest, res: Response): P
         data: {
           participant1Id: req.user!.id,
           participant2Id: material.sellerId,
+          materialId: material.id,
+          requestId: request.id,
+          lastMessage: `Purchase Request for ${material.title}: ${quantity} ${material.unit} at ₹${offeredPrice}/${material.unit}`,
+          lastMessageAt: new Date(),
+        },
+      });
+    } else {
+      await prisma.conversation.update({
+        where: { id: conversation.id },
+        data: {
           requestId: request.id,
           lastMessage: `Purchase Request for ${material.title}: ${quantity} ${material.unit} at ₹${offeredPrice}/${material.unit}`,
           lastMessageAt: new Date(),
@@ -87,7 +102,7 @@ requestsRouter.post('/', requireAuth, async (req: AuthRequest, res: Response): P
       data: {
         conversationId: conversation.id,
         senderId: req.user!.id,
-        content: `Initiated purchase request for ${material.title} (${quantity} ${material.unit}) at offered rate ₹${offeredPrice}/${material.unit}. Method: ${pickupMethod}. Message: "${message || 'Interested in transaction'}"`,
+        content: `New Buyer Request:\n• Company Name: ${req.user!.businessName}\n• Interested In: ${material.title}\n• Category: ${material.category}\n• Quantity: ${quantity} ${material.unit}\n• Offered Rate: ₹${offeredPrice}/${material.unit}\n• Pickup Method: ${pickupMethod}\n• Message: "${message ? message.trim() : 'We are interested in purchasing this material.'}"`,
         isNegotiation: true,
         proposedPrice: parseFloat(offeredPrice),
       },
@@ -97,10 +112,10 @@ requestsRouter.post('/', requireAuth, async (req: AuthRequest, res: Response): P
     await prisma.notification.create({
       data: {
         userId: material.sellerId,
-        title: 'New Material Purchase Request!',
-        message: `${req.user!.businessName} offered ₹${offeredPrice}/${material.unit} for ${quantity} ${material.unit} of "${material.title}".`,
+        title: 'New Buyer Request',
+        message: `Company: ${req.user!.businessName}\nInterested In: ${material.title}\nCategory: ${material.category}\nMessage: ${message ? message.trim() : 'We are interested in purchasing this material.'}\nOffered Rate: ₹${offeredPrice}/${material.unit} (${quantity} ${material.unit})`,
         type: 'REQUEST',
-        link: '/seller/requests',
+        link: `/messages?conversationId=${conversation.id}`,
       },
     });
 

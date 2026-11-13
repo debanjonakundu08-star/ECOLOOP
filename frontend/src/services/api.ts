@@ -71,7 +71,60 @@ function getMockFallback<T>(url: string, options: RequestInit = {}): T | null {
   const allListings = getLocalListings();
 
   if (cleanUrl === '/materials' && method === 'GET') {
-    return { listings: allListings, total: allListings.length } as unknown as T;
+    const queryPart = url.includes('?') ? url.split('?')[1] : '';
+    const searchParams = new URLSearchParams(queryPart);
+    const categoryParam = searchParams.get('category');
+    const minPriceParam = searchParams.get('minPrice');
+    const maxPriceParam = searchParams.get('maxPrice');
+    const searchParam = searchParams.get('search');
+    const conditionParam = searchParams.get('condition');
+    const cityParam = searchParams.get('city');
+
+    let filtered = allListings;
+
+    if (categoryParam && categoryParam !== 'All') {
+      const catLower = categoryParam.toLowerCase();
+      filtered = filtered.filter((item) => {
+        const itemCat = (item.category || '').toLowerCase();
+        if (catLower === 'paper' || catLower === 'cardboard' || catLower === 'paper/cardboard') {
+          return itemCat.includes('paper') || itemCat.includes('cardboard');
+        }
+        return itemCat === catLower || itemCat.includes(catLower);
+      });
+    }
+
+    if (minPriceParam !== null && minPriceParam !== '') {
+      const minVal = parseFloat(minPriceParam);
+      if (!isNaN(minVal)) {
+        filtered = filtered.filter((item) => Number(item.pricePerUnit) >= minVal);
+      }
+    }
+
+    if (maxPriceParam !== null && maxPriceParam !== '') {
+      const maxVal = parseFloat(maxPriceParam);
+      if (!isNaN(maxVal)) {
+        filtered = filtered.filter((item) => Number(item.pricePerUnit) <= maxVal);
+      }
+    }
+
+    if (conditionParam && conditionParam !== 'All') {
+      filtered = filtered.filter((item) => item.condition === conditionParam);
+    }
+
+    if (cityParam) {
+      filtered = filtered.filter((item) => (item.locationCity || '').toLowerCase().includes(cityParam.toLowerCase()));
+    }
+
+    if (searchParam) {
+      const q = searchParam.toLowerCase();
+      filtered = filtered.filter((item) =>
+        (item.title || '').toLowerCase().includes(q) ||
+        (item.description || '').toLowerCase().includes(q) ||
+        (item.category || '').toLowerCase().includes(q)
+      );
+    }
+
+    return { listings: filtered, total: filtered.length } as unknown as T;
   }
 
   if (cleanUrl.startsWith('/materials/') && (method === 'PUT' || method === 'PATCH')) {
@@ -722,18 +775,38 @@ export const api = {
         const query = searchParams.toString() ? `?${searchParams.toString()}` : '';
         const res = await fetchJson<{ listings: MaterialListing[]; total: number }>(`/materials${query}`);
         if (res && Array.isArray(res.listings)) {
-          if (res.listings.length === 0 && (params.search || params.category || params.city || params.condition || params.minPrice || params.maxPrice)) {
-            return res;
-          }
-          if (res.listings.length > 0) {
-            return res;
-          }
+          return res;
         }
-        const fallbackListings = getLocalListings();
-        return { listings: fallbackListings, total: fallbackListings.length };
+        let list = getLocalListings();
+        return { listings: list, total: list.length };
       } catch {
-        const fallbackListings = getLocalListings();
-        return { listings: fallbackListings, total: fallbackListings.length };
+        let list = getLocalListings();
+        if (params.category && params.category !== 'All') {
+          const cat = params.category.toLowerCase();
+          list = list.filter((m) => {
+            const mCat = (m.category || '').toLowerCase();
+            if (cat === 'paper' || cat === 'cardboard' || cat === 'paper/cardboard') {
+              return mCat.includes('paper') || mCat.includes('cardboard');
+            }
+            return mCat === cat || mCat.includes(cat);
+          });
+        }
+        if (params.minPrice !== undefined && params.minPrice !== '') {
+          const min = parseFloat(params.minPrice);
+          if (!isNaN(min)) list = list.filter((m) => Number(m.pricePerUnit) >= min);
+        }
+        if (params.maxPrice !== undefined && params.maxPrice !== '') {
+          const max = parseFloat(params.maxPrice);
+          if (!isNaN(max)) list = list.filter((m) => Number(m.pricePerUnit) <= max);
+        }
+        if (params.condition && params.condition !== 'All') {
+          list = list.filter((m) => m.condition === params.condition);
+        }
+        if (params.search) {
+          const q = params.search.toLowerCase();
+          list = list.filter((m) => (m.title || '').toLowerCase().includes(q) || (m.description || '').toLowerCase().includes(q));
+        }
+        return { listings: list, total: list.length };
       }
     },
     getById: async (id: string) => {
@@ -829,6 +902,8 @@ export const api = {
         monthlySales: Array<{ month: string; revenue: number; orders: number }>;
         categoryBreakdown: Array<{ name: string; value: number }>;
       };
+      notifications?: Notification[];
+      unreadNotificationsCount?: number;
     }>('/seller/dashboard'),
   },
 

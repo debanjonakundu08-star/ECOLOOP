@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
-import { MaterialRequest, MaterialListing, Order } from '../types';
+import { MaterialRequest, MaterialListing, Order, Notification } from '../types';
 import { getCategoryFallbackImage, getListingPrimaryImage } from '../utils/categoryImages';
 import {
   Boxes,
@@ -16,6 +16,11 @@ import {
   ExternalLink,
   Pencil,
   Store,
+  Bell,
+  MessageSquare,
+  X,
+  CheckCheck,
+  Building2,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -28,9 +33,10 @@ import {
   Pie,
   Cell,
 } from 'recharts';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export const SellerDashboardPage: React.FC = () => {
+  const navigate = useNavigate();
   const [data, setData] = useState<{
     kpis: {
       totalListings?: number;
@@ -49,14 +55,25 @@ export const SellerDashboardPage: React.FC = () => {
       monthlySales: Array<{ month: string; revenue: number; orders: number }>;
       categoryBreakdown: Array<{ name: string; value: number }>;
     };
+    notifications?: Notification[];
+    unreadNotificationsCount?: number;
   } | null>(null);
 
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [showNotificationPanel, setShowNotificationPanel] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
 
   const loadDashboard = async () => {
     try {
-      const res = await api.seller.getDashboard();
+      const [res, notifRes] = await Promise.all([
+        api.seller.getDashboard(),
+        api.notifications.getAll().catch(() => ({ notifications: [], unreadCount: 0 })),
+      ]);
       setData(res);
+      const notifs = notifRes.notifications?.length ? notifRes.notifications : (res.notifications || []);
+      setNotifications(notifs);
+      setUnreadCount(notifRes.unreadCount ?? res.unreadNotificationsCount ?? notifs.filter(n => !n.isRead).length);
     } catch (err) {
       console.error('Failed to load seller dashboard:', err);
     } finally {
@@ -67,6 +84,57 @@ export const SellerDashboardPage: React.FC = () => {
   useEffect(() => {
     loadDashboard();
   }, []);
+
+  const parseNotification = (notif: Notification) => {
+    const lines = (notif.message || '').split('\n');
+    const map: Record<string, string> = {};
+    let fallbackText = '';
+    lines.forEach((line) => {
+      const idx = line.indexOf(': ');
+      if (idx !== -1) {
+        const k = line.slice(0, idx).trim();
+        const v = line.slice(idx + 2).trim();
+        map[k] = v;
+      } else {
+        fallbackText += (fallbackText ? ' ' : '') + line;
+      }
+    });
+    return {
+      companyName: map['Company'] || notif.title.replace('New Purchase Request from ', '').replace('New Message from ', '') || 'Verified Buyer',
+      productName: map['Interested In'] || 'Material Listing',
+      category: map['Category'] || 'Industrial Scrap',
+      offeredRate: map['Offered Rate'] || null,
+      messageText: map['Message'] || fallbackText || notif.message,
+      status: notif.isRead ? 'Read' : 'New',
+    };
+  };
+
+  const handleMarkAllRead = async () => {
+    try {
+      await api.notifications.markAllRead();
+      setUnreadCount(0);
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    } catch (err) {
+      console.error('Failed to mark all as read:', err);
+    }
+  };
+
+  const handleNotificationClick = async (notif: Notification) => {
+    try {
+      if (!notif.isRead) {
+        await api.notifications.markRead(notif.id).catch(() => {});
+        setNotifications((prev) => prev.map((n) => (n.id === notif.id ? { ...n, isRead: true } : n)));
+        setUnreadCount((c) => Math.max(0, c - 1));
+      }
+      if (notif.link) {
+        navigate(notif.link);
+      } else {
+        navigate('/messages');
+      }
+    } catch (err) {
+      console.error('Failed to handle notification click:', err);
+    }
+  };
 
   const handleDeleteListing = async (listingId: string) => {
     if (!window.confirm('Are you sure you want to delete this listing?')) return;
@@ -110,8 +178,32 @@ export const SellerDashboardPage: React.FC = () => {
             </p>
           </div>
 
-          {/* Quick Seller Actions */}
+          {/* Quick Seller Actions & Notification Bell */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0">
+            {/* Notification Bell Button */}
+            <button
+              type="button"
+              onClick={() => setShowNotificationPanel((prev) => !prev)}
+              className={`relative px-3.5 py-2.5 rounded-xl font-bold text-xs border transition-all shadow-2xs flex items-center justify-center gap-2 cursor-pointer ${
+                showNotificationPanel || unreadCount > 0
+                  ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-500/50'
+                  : 'bg-white dark:bg-ecoDark-card text-slate-700 dark:text-slate-200 border-slate-200 dark:border-emerald-900/60 hover:bg-slate-50'
+              }`}
+              title="Buyer Requests & Notifications"
+            >
+              <Bell className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              <span>Buyer Requests</span>
+              {unreadCount > 0 ? (
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-rose-500 text-white animate-pulse">
+                  {unreadCount}
+                </span>
+              ) : (
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-semibold bg-slate-100 dark:bg-ecoDark-bg text-slate-500">
+                  {notifications.length}
+                </span>
+              )}
+            </button>
+
             <Link
               to="/seller/listings"
               className="px-4 py-2.5 rounded-xl font-bold text-xs bg-white dark:bg-ecoDark-card text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-emerald-900/60 hover:bg-slate-50 transition-all shadow-2xs text-center"
@@ -133,6 +225,142 @@ export const SellerDashboardPage: React.FC = () => {
             </Link>
           </div>
         </div>
+
+        {/* Dedicated Buyer Requests / Notification Panel */}
+        {showNotificationPanel && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="bg-white dark:bg-ecoDark-surface rounded-3xl p-6 sm:p-8 border-2 border-emerald-500/30 dark:border-emerald-500/40 shadow-xl space-y-6"
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 dark:border-emerald-950/60 gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 flex items-center justify-center font-bold">
+                  <Bell className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-lg font-black text-slate-900 dark:text-white">
+                      Buyer Requests &amp; Notification Panel
+                    </h2>
+                    {unreadCount > 0 && (
+                      <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-500 text-white">
+                        {unreadCount} New
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Incoming purchase enquiries and messages sent by interested buyers for your listed products.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 self-end sm:self-center">
+                {unreadCount > 0 && (
+                  <button
+                    onClick={handleMarkAllRead}
+                    className="px-3 py-1.5 rounded-xl text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-ecoDark-card transition-colors flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <CheckCheck className="w-3.5 h-3.5" />
+                    <span>Mark all as read</span>
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowNotificationPanel(false)}
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-ecoDark-card transition-colors cursor-pointer"
+                  title="Close panel"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {notifications.length === 0 ? (
+              <div className="py-12 text-center space-y-2">
+                <Bell className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto" />
+                <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                  No buyer enquiries yet
+                </h3>
+                <p className="text-xs text-slate-400 dark:text-slate-500 max-w-sm mx-auto">
+                  When a buyer requests to purchase or discusses your listed waste materials, real-time alerts will appear here.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {notifications.map((notif) => {
+                  const parsed = parseNotification(notif);
+                  return (
+                    <div
+                      key={notif.id}
+                      className={`p-5 rounded-2xl border transition-all space-y-3 ${
+                        !notif.isRead
+                          ? 'bg-emerald-50/40 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-500/40 shadow-sm'
+                          : 'bg-slate-50/60 dark:bg-ecoDark-card border-slate-200/80 dark:border-emerald-900/40'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <Building2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                          <span className="font-black text-sm text-slate-900 dark:text-white">
+                            {parsed.companyName}
+                          </span>
+                        </div>
+                        <span
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider shrink-0 ${
+                            !notif.isRead
+                              ? 'bg-emerald-600 text-white'
+                              : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                          }`}
+                        >
+                          {!notif.isRead ? 'New' : 'Read'}
+                        </span>
+                      </div>
+
+                      <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300 bg-white/70 dark:bg-ecoDark-surface/60 p-3 rounded-xl border border-slate-100 dark:border-emerald-950/60">
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-400 font-semibold">Interested In:</span>
+                          <span className="font-bold text-slate-800 dark:text-slate-100">{parsed.productName}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-400 font-semibold">Category:</span>
+                          <span className="font-semibold text-emerald-700 dark:text-emerald-400">{parsed.category}</span>
+                        </div>
+                        {parsed.offeredRate && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-400 font-semibold">Offered Rate:</span>
+                            <span className="font-bold text-slate-900 dark:text-white">{parsed.offeredRate}</span>
+                          </div>
+                        )}
+                        <div className="pt-1.5 border-t border-slate-100 dark:border-emerald-950/60">
+                          <span className="text-slate-400 font-semibold block text-[11px]">Message:</span>
+                          <p className="text-xs text-slate-700 dark:text-slate-200 italic mt-0.5">"{parsed.messageText}"</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-1">
+                        <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
+                          {new Date(notif.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })} at{' '}
+                          {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={() => handleNotificationClick(notif)}
+                          className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white transition-all shadow-xs flex items-center gap-1.5 cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+                        >
+                          <MessageSquare className="w-3.5 h-3.5" />
+                          <span>Open &amp; Respond via Chat</span>
+                          <ArrowRight className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </motion.div>
+        )}
 
         {/* 1. Required Seller KPI Metric Cards */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
