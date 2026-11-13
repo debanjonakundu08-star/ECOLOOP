@@ -1,8 +1,15 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { Recycle, Mail, Phone, MapPin, ArrowUpRight, ShieldCheck, Leaf } from 'lucide-react';
 
 export const Footer: React.FC = () => {
+  const { user } = useAuth();
+  const location = useLocation();
+
+  if (!user && (location.pathname === '/' || location.pathname === '/landing')) {
+    return null;
+  }
   return (
     <footer className="bg-gradient-to-b from-[#041a10] via-[#02130b] to-[#010c07] text-slate-300 pt-16 pb-12 border-t border-emerald-500/20 relative overflow-hidden">
       <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent"></div>

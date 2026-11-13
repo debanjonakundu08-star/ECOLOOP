@@ -119,6 +119,11 @@ export const Navbar: React.FC = () => {
 
   const isActive = (path: string) => location.pathname === path;
 
+  // When unauthenticated on the root public landing page, PublicLandingPage renders its dedicated navigation bar
+  if (!user && (location.pathname === '/' || location.pathname === '/landing')) {
+    return null;
+  }
+
   return (
     <header className="sticky top-0 z-50 bg-white/90 dark:bg-[#071a13]/90 backdrop-blur-md border-b border-emerald-950/10 dark:border-emerald-500/20 shadow-xs dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)] transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

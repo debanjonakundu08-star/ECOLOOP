@@ -24,6 +24,7 @@ export const SignupPage: React.FC = () => {
   const [searchParams] = useSearchParams();
 
   const initialRoleParam = searchParams.get('role');
+  const hasExplicitRole = !!initialRoleParam && (initialRoleParam.toLowerCase() === 'buyer' || initialRoleParam.toLowerCase() === 'seller');
   const [selectedRole, setSelectedRole] = useState<UserRole>(
     initialRoleParam?.toLowerCase() === 'seller' ? 'SELLER' : 'BUYER'
   );
@@ -119,43 +120,71 @@ export const SignupPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Role Selector Tabs */}
-        <div className="space-y-1.5">
-          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-            Select Your Account Role *
-          </label>
-          <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-emerald-950/40 rounded-2xl border border-slate-200 dark:border-emerald-800/40">
-            <button
-              type="button"
-              onClick={() => setSelectedRole('BUYER')}
-              className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl font-bold text-xs transition-all cursor-pointer ${
-                selectedRole === 'BUYER'
-                  ? 'bg-white dark:bg-emerald-600 text-emerald-800 dark:text-white shadow-sm ring-2 ring-emerald-500/20'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
+        {/* Role Selection or Locked Role Badge */}
+        {hasExplicitRole ? (
+          <div className="flex items-center justify-between p-3.5 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/50 border border-emerald-200/80 dark:border-emerald-500/30">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-900/60 flex items-center justify-center shrink-0">
+                {selectedRole === 'BUYER' ? (
+                  <ShoppingCart className="w-4 h-4 text-emerald-700 dark:text-emerald-300" />
+                ) : (
+                  <Store className="w-4 h-4 text-emerald-700 dark:text-emerald-300" />
+                )}
+              </div>
+              <div>
+                <p className="text-xs font-bold text-emerald-950 dark:text-emerald-200">
+                  Registering as {selectedRole === 'BUYER' ? 'Buyer' : 'Seller'}
+                </p>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                  {selectedRole === 'BUYER' ? 'Procure secondary industrial raw materials' : 'Monetize excess commercial waste streams'}
+                </p>
+              </div>
+            </div>
+            <Link
+              to="/signup"
+              className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 hover:underline px-2 py-1 rounded-lg hover:bg-emerald-100/50 dark:hover:bg-emerald-900/40 transition-colors shrink-0"
             >
-              <ShoppingCart className="w-4 h-4 text-emerald-600 dark:text-emerald-300" />
-              <span>Register as Buyer</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelectedRole('SELLER')}
-              className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl font-bold text-xs transition-all cursor-pointer ${
-                selectedRole === 'SELLER'
-                  ? 'bg-white dark:bg-emerald-600 text-emerald-800 dark:text-white shadow-sm ring-2 ring-emerald-500/20'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              <Store className="w-4 h-4 text-emerald-600 dark:text-emerald-300" />
-              <span>Register as Seller</span>
-            </button>
+              Switch Role
+            </Link>
           </div>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 text-center">
-            {selectedRole === 'BUYER'
-              ? '🛒 Buyer account: browse catalog, enquire, and procure secondary raw materials.'
-              : '📦 Seller account: list industrial scrap, manage listings, and receive buyer enquiries.'}
-          </p>
-        </div>
+        ) : (
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+              Select Your Account Role *
+            </label>
+            <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-emerald-950/40 rounded-2xl border border-slate-200 dark:border-emerald-800/40">
+              <button
+                type="button"
+                onClick={() => setSelectedRole('BUYER')}
+                className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+                  selectedRole === 'BUYER'
+                    ? 'bg-white dark:bg-emerald-600 text-emerald-800 dark:text-white shadow-sm ring-2 ring-emerald-500/20'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <ShoppingCart className="w-4 h-4 text-emerald-600 dark:text-emerald-300" />
+                <span>Register as Buyer</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedRole('SELLER')}
+                className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+                  selectedRole === 'SELLER'
+                    ? 'bg-white dark:bg-emerald-600 text-emerald-800 dark:text-white shadow-sm ring-2 ring-emerald-500/20'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <Store className="w-4 h-4 text-emerald-600 dark:text-emerald-300" />
+                <span>Register as Seller</span>
+              </button>
+            </div>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 text-center">
+              {selectedRole === 'BUYER'
+                ? '🛒 Buyer account: browse catalog, enquire, and procure secondary raw materials.'
+                : '📦 Seller account: list industrial scrap, manage listings, and receive buyer enquiries.'}
+            </p>
+          </div>
+        )}
 
         {error && (
           <div className="p-3.5 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 text-red-700 dark:text-red-300 text-xs flex items-center gap-2">
@@ -335,7 +364,10 @@ export const SignupPage: React.FC = () => {
 
         <div className="text-center text-xs text-slate-500 dark:text-slate-400">
           Already registered?{' '}
-          <Link to="/login" className="font-bold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 transition-colors">
+          <Link
+            to={hasExplicitRole ? `/login?role=${selectedRole.toLowerCase()}` : '/login'}
+            className="font-bold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 transition-colors"
+          >
             Sign in to your account
           </Link>
         </div>

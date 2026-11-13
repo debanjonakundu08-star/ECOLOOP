@@ -29,6 +29,7 @@ import { CheckoutPage } from './pages/CheckoutPage';
 import { ImpactDashboardPage } from './pages/ImpactDashboardPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { EditListingPage } from './pages/EditListingPage';
+import { ContactPage } from './pages/ContactPage';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { RootGateway } from './components/RootGateway';
 
@@ -48,6 +49,8 @@ export const App: React.FC = () => {
                     <Route path="/landing" element={<HomePage />} />
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/signup" element={<SignupPage />} />
+                    <Route path="/contact" element={<ContactPage />} />
+                    <Route path="/auth" element={<Navigate to="/login" replace />} />
                     <Route path="/marketplace" element={<MarketplacePage />} />
                     <Route path="/materials/:id" element={<MaterialDetailPage />} />
                     <Route path="/impact" element={<ImpactDashboardPage />} />

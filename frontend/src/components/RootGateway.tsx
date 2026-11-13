@@ -1,14 +1,12 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LoginPage } from '../pages/LoginPage';
+import { PublicLandingPage } from '../pages/PublicLandingPage';
 
 /**
  * RootGateway manages the entry point to EcoLoop.
- * As required:
- * - Unauthenticated users landing on '/' immediately see the Role Selection & Login interface
- *   with the two clear choices: 'Continue as Buyer' vs 'Continue as Seller'.
- * - Authenticated Buyers are automatically directed to their dedicated '/buyer/dashboard'.
+ * - Unauthenticated visitors landing on '/' see the dedicated Public Home / Landing Page.
+ * - Authenticated Buyers are automatically directed to their dedicated '/buyer/marketplace'.
  * - Authenticated Sellers are automatically directed to their dedicated '/seller/dashboard'.
  */
 export const RootGateway: React.FC = () => {
@@ -29,5 +27,5 @@ export const RootGateway: React.FC = () => {
     return <Navigate to="/buyer/marketplace" replace />;
   }
 
-  return <LoginPage />;
+  return <PublicLandingPage />;
 };
