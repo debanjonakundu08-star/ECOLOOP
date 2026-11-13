@@ -28,8 +28,9 @@ async function main() {
 
   const sellerUser = await prisma.user.create({
     data: {
-      email: 'seller@ecoloop.com',
+      email: 'greenpack@ecoloop.com',
       password: passwordHash,
+      role: 'SELLER',
       businessName: 'GreenPack Innovations Pvt Ltd',
       contactPerson: 'Amitav Sen',
       phone: '+91 98301 23456',
@@ -49,12 +50,30 @@ async function main() {
     },
   });
 
+  // Alias seller account for compatibility
+  await prisma.user.create({
+    data: {
+      email: 'seller@ecoloop.com',
+      password: passwordHash,
+      role: 'SELLER',
+      businessName: 'GreenPack Innovations Pvt Ltd',
+      contactPerson: 'Amitav Sen',
+      phone: '+91 98301 23456',
+      city: 'Kolkata',
+      address: 'Plot 14, Sector V, Salt Lake, Kolkata, West Bengal',
+      category: 'Packaging',
+      bio: 'Leading packaging and carton manufacturer with surplus cardboard offcuts and clean packaging waste.',
+      isVerified: true,
+    },
+  });
+
   const buyerUser = await prisma.user.create({
     data: {
-      email: 'buyer@ecoloop.com',
+      email: 'purchase@greentechpolymers.in',
       password: passwordHash,
-      businessName: 'Bengal EcoRecycle Solutions',
-      contactPerson: 'Rhea Mukherjee',
+      role: 'BUYER',
+      businessName: 'GreenTech Polymers & Recycling',
+      contactPerson: 'Siddharth Roy',
       phone: '+91 98312 98765',
       city: 'Howrah',
       address: 'Dona Paula Industrial Estate, Howrah, West Bengal',
@@ -72,10 +91,28 @@ async function main() {
     },
   });
 
+  // Alias buyer account for compatibility
+  await prisma.user.create({
+    data: {
+      email: 'buyer@ecoloop.com',
+      password: passwordHash,
+      role: 'BUYER',
+      businessName: 'Bengal EcoRecycle Solutions',
+      contactPerson: 'Rhea Mukherjee',
+      phone: '+91 98312 98765',
+      city: 'Howrah',
+      address: 'Dona Paula Industrial Estate, Howrah, West Bengal',
+      category: 'Recycling',
+      bio: 'Recycling facility reprocessing plastics, paper pulp, and industrial residues into high-grade pellets.',
+      isVerified: true,
+    },
+  });
+
   const assamBioUser = await prisma.user.create({
     data: {
       email: 'assam.organics@ecoloop.com',
       password: passwordHash,
+      role: 'SELLER',
       businessName: 'Brahmaputra Organics & Bio-Compost',
       contactPerson: 'Pranjal Barua',
       phone: '+91 94350 45678',
@@ -99,6 +136,7 @@ async function main() {
     data: {
       email: 'timber@ecoloop.com',
       password: passwordHash,
+      role: 'SELLER',
       businessName: 'Siliguri Reclaimed Timber & Pallets',
       contactPerson: 'Sanjay Roy',
       phone: '+91 97330 11223',
@@ -122,6 +160,7 @@ async function main() {
     data: {
       email: 'textiles@ecoloop.com',
       password: passwordHash,
+      role: 'SELLER',
       businessName: 'Eastern Textile Mills Ltd',
       contactPerson: 'Deepak Poddar',
       phone: '+91 98305 66778',
@@ -145,6 +184,7 @@ async function main() {
     data: {
       email: 'metals@ecoloop.com',
       password: passwordHash,
+      role: 'SELLER',
       businessName: 'Howrah Alloy & Scrap Recyclers',
       contactPerson: 'Subhashish Ghosh',
       phone: '+91 98311 55443',
