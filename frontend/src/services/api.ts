@@ -15,15 +15,34 @@ import { getCategoryFallbackImage, isLegacyStockUrl } from '../utils/categoryIma
 
 const BASE_URL = '/api';
 
+export function getSessionId(): string {
+  try {
+    let sid = localStorage.getItem('ecoloop_session_id');
+    if (!sid) {
+      sid = 'sess_' + Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4);
+      localStorage.setItem('ecoloop_session_id', sid);
+    }
+    return sid;
+  } catch {
+    return 'sess_default';
+  }
+}
+
 function getMockUser(): User | null {
   try {
-    const token = localStorage.getItem('ecoloop_token');
     const savedUser = localStorage.getItem('ecoloop_mock_user');
     if (savedUser) {
       return JSON.parse(savedUser) as User;
     }
-    if (token === 'mock_demo_token') {
-      return MOCK_USERS[0];
+    const token = localStorage.getItem('ecoloop_token');
+    if (token && token.startsWith('mock_token_')) {
+      const sid = getSessionId();
+      return {
+        ...MOCK_USERS[1],
+        id: 'usr_buyer_' + sid,
+        email: `buyer_${sid}@demo.ecoloop.com`,
+        role: 'BUYER',
+      };
     }
   } catch {}
   return null;
@@ -302,15 +321,26 @@ function getMockFallback<T>(url: string, options: RequestInit = {}): T | null {
     } catch {}
     const selectedRole = (body.role || '').toUpperCase() === 'SELLER' ? 'SELLER' : 'BUYER';
     let user = registered.find(u => u.email.toLowerCase() === email);
+    const sid = getSessionId();
     if (!user) {
-      if (email === 'purchase@greentechpolymers.in' || email === 'buyer@ecoloop.com') {
-        user = { ...MOCK_USERS[1], role: 'BUYER' };
-      } else if (email === 'greenpack@ecoloop.com' || email === 'seller@ecoloop.com' || email === 'packaging@bengaleco.in') {
-        user = { ...MOCK_USERS[0], role: 'SELLER' };
+      if (email === 'purchase@greentechpolymers.in' || email === 'buyer@ecoloop.com' || (!email && selectedRole === 'BUYER')) {
+        user = {
+          ...MOCK_USERS[1],
+          id: 'usr_buyer_' + sid,
+          email: `buyer_${sid}@demo.ecoloop.com`,
+          role: 'BUYER',
+        };
+      } else if (email === 'greenpack@ecoloop.com' || email === 'seller@ecoloop.com' || email === 'packaging@bengaleco.in' || (!email && selectedRole === 'SELLER')) {
+        user = {
+          ...MOCK_USERS[0],
+          id: 'usr_seller_' + sid,
+          email: `seller_${sid}@demo.ecoloop.com`,
+          role: 'SELLER',
+        };
       } else if (email) {
         // Fallback persistent business account derived from email
         user = {
-          id: 'usr_' + email.replace(/[^a-z0-9]/g, '_'),
+          id: 'usr_' + email.replace(/[^a-z0-9]/g, '_') + '_' + sid,
           businessName: email.split('@')[0].replace(/[^a-zA-Z0-9 ]/g, ' ').toUpperCase(),
           email,
           role: selectedRole,
@@ -633,62 +663,59 @@ function getMockFallback<T>(url: string, options: RequestInit = {}): T | null {
   }
 
   if (cleanUrl === '/messages/conversations') {
-    return {
-      conversations: [
-        {
-          id: 'conv-1',
-          user1Id: MOCK_USERS[0].id,
-          user2Id: MOCK_USERS[1].id,
-          lastMessage: 'Rate counter-offer confirmed at ₹14.50/kg.',
-          lastMessageAt: new Date().toISOString(),
-          unreadCount: 0,
-          otherUser: MOCK_USERS[1],
-          request: {
-            id: 'req-1',
-            material: allListings[0],
-          }
-        }
-      ]
-    } as unknown as T;
+    const currentUser = getMockUser();
+    if (!currentUser) return { conversations: [] } as unknown as T;
+    let customConvs: Conversation[] = [];
+    try {
+      customConvs = JSON.parse(localStorage.getItem(`ecoloop_convs_${currentUser.id}`) || '[]');
+    } catch {}
+    const scoped = customConvs.filter((c: any) => {
+      if (currentUser.role === 'BUYER') {
+        return c.buyerId === currentUser.id || (!c.buyerId && c.otherUser?.id !== currentUser.id);
+      }
+      return c.sellerId === currentUser.id || (!c.sellerId && c.otherUser?.id !== currentUser.id);
+    });
+    return { conversations: scoped } as unknown as T;
   }
 
   if (cleanUrl.startsWith('/messages/conversation/')) {
+    const convId = cleanUrl.replace('/messages/conversation/', '');
+    const currentUser = getMockUser();
+    if (!currentUser) return { conversation: null, messages: [] } as unknown as T;
+    let customConvs: Conversation[] = [];
+    let customMsgs: Message[] = [];
+    try {
+      customConvs = JSON.parse(localStorage.getItem(`ecoloop_convs_${currentUser.id}`) || '[]');
+      customMsgs = JSON.parse(localStorage.getItem(`ecoloop_msgs_${convId}`) || '[]');
+    } catch {}
+    const found = customConvs.find((c) => c.id === convId) || {
+      id: convId,
+      buyerId: currentUser.role === 'BUYER' ? currentUser.id : 'usr_buyer_partner',
+      sellerId: currentUser.role === 'SELLER' ? currentUser.id : 'usr_seller_1',
+      otherUser: currentUser.role === 'BUYER' ? MOCK_USERS[0] : MOCK_USERS[1],
+      lastMessage: 'Active enquiry thread',
+      lastMessageAt: new Date().toISOString(),
+      unreadCount: 0,
+    };
     return {
-      conversation: { id: 'conv-1', otherUser: MOCK_USERS[1], request: { material: allListings[0] } },
-      messages: [
-        {
-          id: 'msg-1',
-          conversationId: 'conv-1',
-          senderId: MOCK_USERS[1].id,
-          receiverId: MOCK_USERS[0].id,
-          content: 'Hello! Is this batch of cardboard trimmings baled and moisture tested?',
-          isNegotiation: false,
-          createdAt: new Date(Date.now() - 3600000).toISOString(),
-          sender: MOCK_USERS[1],
-        },
-        {
-          id: 'msg-2',
-          conversationId: 'conv-1',
-          senderId: MOCK_USERS[0].id,
-          receiverId: MOCK_USERS[1].id,
-          content: 'Yes, moisture is below 6.5% and baled in 250kg cubes ready for truckload dispatch.',
-          isNegotiation: true,
-          proposedPrice: 14.5,
-          createdAt: new Date().toISOString(),
-          sender: MOCK_USERS[0],
-        }
-      ]
+      conversation: found,
+      messages: customMsgs,
     } as unknown as T;
   }
 
   if (cleanUrl === '/messages/send' && method === 'POST') {
     const body = options.body ? JSON.parse(options.body as string) : {};
     const currentUser = getMockUser() || MOCK_USERS[0];
+    const convId = body.conversationId || ('conv_' + Date.now());
+    const isBuyer = currentUser.role === 'BUYER';
+    const otherPartner = isBuyer ? MOCK_USERS[0] : MOCK_USERS[1];
+    const targetReceiverId = body.receiverId || otherPartner.id;
+
     const newMsg: Message = {
       id: 'msg-' + Date.now(),
-      conversationId: body.conversationId || 'conv-1',
+      conversationId: convId,
       senderId: currentUser.id,
-      receiverId: body.receiverId || MOCK_USERS[1].id,
+      receiverId: targetReceiverId,
       content: body.content,
       isNegotiation: body.isNegotiation || false,
       proposedPrice: body.proposedPrice,
@@ -696,6 +723,33 @@ function getMockFallback<T>(url: string, options: RequestInit = {}): T | null {
       createdAt: new Date().toISOString(),
       sender: currentUser,
     };
+
+    try {
+      const existingMsgs = JSON.parse(localStorage.getItem(`ecoloop_msgs_${convId}`) || '[]');
+      localStorage.setItem(`ecoloop_msgs_${convId}`, JSON.stringify([...existingMsgs, newMsg]));
+
+      const userConvs: Conversation[] = JSON.parse(localStorage.getItem(`ecoloop_convs_${currentUser.id}`) || '[]');
+      const existingIndex = userConvs.findIndex((c) => c.id === convId);
+      const updatedConv: Conversation = {
+        id: convId,
+        buyerId: isBuyer ? currentUser.id : targetReceiverId,
+        sellerId: isBuyer ? targetReceiverId : currentUser.id,
+        user1Id: currentUser.id,
+        user2Id: targetReceiverId,
+        otherUser: otherPartner,
+        lastMessage: body.content,
+        lastMessageAt: new Date().toISOString(),
+        unreadCount: 0,
+      };
+
+      if (existingIndex >= 0) {
+        userConvs[existingIndex] = updatedConv;
+      } else {
+        userConvs.unshift(updatedConv);
+      }
+      localStorage.setItem(`ecoloop_convs_${currentUser.id}`, JSON.stringify(userConvs));
+    } catch {}
+
     return { message: newMsg } as unknown as T;
   }
 
@@ -744,6 +798,7 @@ async function fetchJson<T>(url: string, options: RequestInit = {}): Promise<T> 
   const token = localStorage.getItem('ecoloop_token');
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    'X-Session-Id': getSessionId(),
     ...(options.headers as Record<string, string> || {}),
   };
 
@@ -795,7 +850,7 @@ export const api = {
     }),
     login: (body: any) => fetchJson<{ message: string; token: string; user: User }>('/auth/login', {
       method: 'POST',
-      body: JSON.stringify(body),
+      body: JSON.stringify({ ...body, sessionId: getSessionId() }),
     }),
     logout: () => fetchJson<{ message: string }>('/auth/logout', { method: 'POST' }),
     me: async () => {
@@ -906,9 +961,12 @@ export const api = {
   },
 
   messages: {
-    getConversations: () => fetchJson<{ conversations: Conversation[] }>('/messages/conversations'),
+    getConversations: (params?: { role?: string }) => {
+      const query = params?.role ? `?role=${params.role}` : '';
+      return fetchJson<{ conversations: Conversation[] }>(`/messages/conversations${query}`);
+    },
     getConversation: (id: string) => fetchJson<{ conversation: any; messages: Message[] }>(`/messages/conversation/${id}`),
-    send: (body: { conversationId?: string; receiverId?: string; content: string; isNegotiation?: boolean; proposedPrice?: number }) =>
+    send: (body: { conversationId?: string; receiverId?: string; materialId?: string; content: string; isNegotiation?: boolean; proposedPrice?: number }) =>
       fetchJson<{ message: Message }>('/messages/send', {
         method: 'POST',
         body: JSON.stringify(body),

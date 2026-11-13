@@ -78,6 +78,8 @@ requestsRouter.post('/', requireAuth, async (req: AuthRequest, res: Response): P
     if (!conversation) {
       conversation = await prisma.conversation.create({
         data: {
+          buyerId: req.user!.id,
+          sellerId: material.sellerId,
           participant1Id: req.user!.id,
           participant2Id: material.sellerId,
           materialId: material.id,
@@ -90,6 +92,8 @@ requestsRouter.post('/', requireAuth, async (req: AuthRequest, res: Response): P
       await prisma.conversation.update({
         where: { id: conversation.id },
         data: {
+          buyerId: req.user!.id,
+          sellerId: material.sellerId,
           requestId: request.id,
           lastMessage: `Purchase Request for ${material.title}: ${quantity} ${material.unit} at ₹${offeredPrice}/${material.unit}`,
           lastMessageAt: new Date(),
@@ -102,6 +106,7 @@ requestsRouter.post('/', requireAuth, async (req: AuthRequest, res: Response): P
       data: {
         conversationId: conversation.id,
         senderId: req.user!.id,
+        receiverId: material.sellerId,
         content: `New Buyer Request:\n• Company Name: ${req.user!.businessName}\n• Interested In: ${material.title}\n• Category: ${material.category}\n• Quantity: ${quantity} ${material.unit}\n• Offered Rate: ₹${offeredPrice}/${material.unit}\n• Pickup Method: ${pickupMethod}\n• Message: "${message ? message.trim() : 'We are interested in purchasing this material.'}"`,
         isNegotiation: true,
         proposedPrice: parseFloat(offeredPrice),
@@ -304,23 +309,44 @@ requestsRouter.put('/:id/status', requireAuth, async (req: AuthRequest, res: Res
       let conversation = await prisma.conversation.findFirst({
         where: {
           OR: [
+            { buyerId: request.buyerId, sellerId: request.sellerId },
             { participant1Id: request.buyerId, participant2Id: request.sellerId },
             { participant1Id: request.sellerId, participant2Id: request.buyerId },
           ],
         },
       });
 
-      if (conversation) {
-        await prisma.message.create({
+      if (!conversation) {
+        conversation = await prisma.conversation.create({
           data: {
-            conversationId: conversation.id,
-            senderId: req.user!.id,
-            content: `Counter-offer: Proposed ₹${counterPrice}/${request.material.unit}. Note: ${counterNotes || 'Let\'s finalize this rate.'}`,
-            isNegotiation: true,
-            proposedPrice: parseFloat(counterPrice),
+            buyerId: request.buyerId,
+            sellerId: request.sellerId,
+            participant1Id: request.buyerId,
+            participant2Id: request.sellerId,
+            materialId: request.materialId,
+            requestId: request.id,
+            lastMessage: `Counter-offer: Proposed ₹${counterPrice}/${request.material.unit}`,
+            lastMessageAt: new Date(),
           },
         });
+      } else if (!conversation.buyerId || !conversation.sellerId) {
+        await prisma.conversation.update({
+          where: { id: conversation.id },
+          data: { buyerId: request.buyerId, sellerId: request.sellerId },
+        });
       }
+
+      const counterReceiverId = isSeller ? request.buyerId : request.sellerId;
+      await prisma.message.create({
+        data: {
+          conversationId: conversation.id,
+          senderId: req.user!.id,
+          receiverId: counterReceiverId,
+          content: `Counter-offer: Proposed ₹${counterPrice}/${request.material.unit}. Note: ${counterNotes || 'Let\'s finalize this rate.'}`,
+          isNegotiation: true,
+          proposedPrice: parseFloat(counterPrice),
+        },
+      });
     }
 
     res.json({

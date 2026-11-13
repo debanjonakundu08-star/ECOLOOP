@@ -60,7 +60,29 @@ export const MessagingPage: React.FC = () => {
   const selectConversation = async (convId: string) => {
     try {
       const res = await api.messages.getConversation(convId);
-      setActiveConv(res.conversation);
+      const conv = res.conversation;
+      const currentUserId = user?.id;
+
+      // Strict participant verification guard
+      if (conv && currentUserId) {
+        const isParticipant =
+          conv.buyerId === currentUserId ||
+          conv.sellerId === currentUserId ||
+          conv.user1Id === currentUserId ||
+          conv.user2Id === currentUserId ||
+          conv.participant1Id === currentUserId ||
+          conv.participant2Id === currentUserId ||
+          (conv.otherUser && conv.otherUser.id !== currentUserId);
+
+        if (!isParticipant) {
+          console.warn('Unauthorized conversation view blocked.');
+          setActiveConv(null);
+          setMessages([]);
+          return;
+        }
+      }
+
+      setActiveConv(conv);
       setMessages(Array.isArray(res.messages) ? res.messages : []);
       if (res.conversation?.material) {
         setReferencedMaterial(res.conversation.material);
@@ -68,20 +90,43 @@ export const MessagingPage: React.FC = () => {
       scrollToBottom();
     } catch (err) {
       console.error('Failed to load messages for conversation:', err);
+      setActiveConv(null);
+      setMessages([]);
     }
   };
 
   const loadConversations = async (autoSelectId?: string) => {
     try {
-      const res = await api.messages.getConversations();
-      const convList = Array.isArray(res.conversations) ? res.conversations : [];
+      const userRole = user?.role;
+      const currentUserId = user?.id;
+
+      const res = await api.messages.getConversations({
+        role: userRole?.toLowerCase(),
+      });
+      const rawList = Array.isArray(res.conversations) ? res.conversations : [];
+
+      // Strict participant-only conversation filtering:
+      // Buyer: only conversations where buyerId === user.id
+      // Seller: only conversations where sellerId === user.id
+      const convList = rawList.filter((c: any) => {
+        if (!currentUserId) return true;
+        if (userRole === 'BUYER') {
+          if (c.buyerId) return c.buyerId === currentUserId;
+          return c.otherUser?.id !== currentUserId && (c.user1Id === currentUserId || c.participant1Id === currentUserId || c.participant2Id === currentUserId);
+        }
+        if (userRole === 'SELLER') {
+          if (c.sellerId) return c.sellerId === currentUserId;
+          return c.otherUser?.id !== currentUserId && (c.user2Id === currentUserId || c.participant1Id === currentUserId || c.participant2Id === currentUserId);
+        }
+        return c.buyerId === currentUserId || c.sellerId === currentUserId;
+      });
+
       setConversations(convList);
 
       const targetId = autoSelectId || directConvId;
       if (targetId) {
         selectConversation(targetId);
       } else if (convList.length > 0 && !activeConv) {
-        // If recipientId is specified, check if existing conversation with that user exists
         if (recipientId) {
           const match = convList.find(
             (c) => c.user1Id === recipientId || c.user2Id === recipientId || c.otherUser?.id === recipientId
@@ -102,7 +147,7 @@ export const MessagingPage: React.FC = () => {
 
   useEffect(() => {
     loadConversations(directConvId || undefined);
-  }, [recipientId, directConvId]);
+  }, [recipientId, directConvId, user?.id, user?.role]);
 
   useEffect(() => {
     scrollToBottom();
@@ -134,9 +179,7 @@ export const MessagingPage: React.FC = () => {
       scrollToBottom();
 
       // Refresh conversations list to update snippet
-      api.messages.getConversations().then((r) => {
-        if (Array.isArray(r.conversations)) setConversations(r.conversations);
-      });
+      loadConversations(activeConv?.id || res.message.conversationId);
     } catch (err: any) {
       alert(err.message || 'Failed to send message.');
     } finally {
