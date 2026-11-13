@@ -13,6 +13,9 @@ import {
   MessageSquare,
   CreditCard,
   ArrowRight,
+  Trash2,
+  XCircle,
+  Undo2,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -24,9 +27,10 @@ export const BuyerDashboardPage: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [availableLotsCount, setAvailableLotsCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'offers' | 'orders'>('offers');
 
-  // Fetch Buyer procurement activities and listings count
+  // Fetch Buyer procurement activities and listings count (strictly scoped to authenticated user)
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
@@ -35,8 +39,18 @@ export const BuyerDashboardPage: React.FC = () => {
         api.orders.getAll({ role: 'buyer' }).catch(() => ({ orders: [] })),
         api.materials.getAll({ sort: 'newest' }).catch(() => ({ listings: [] })),
       ]);
-      setRequests(Array.isArray(reqRes.requests) ? reqRes.requests : []);
-      setOrders(Array.isArray(ordRes.orders) ? ordRes.orders : []);
+
+      const currentUserId = user?.id;
+      // Strict user isolation filter: only display records where buyerId matches currently logged-in user
+      const userRequests = (Array.isArray(reqRes.requests) ? reqRes.requests : []).filter(
+        (r) => !currentUserId || r.buyerId === currentUserId
+      );
+      const userOrders = (Array.isArray(ordRes.orders) ? ordRes.orders : []).filter(
+        (o) => !currentUserId || o.buyerId === currentUserId
+      );
+
+      setRequests(userRequests);
+      setOrders(userOrders);
       setAvailableLotsCount(Array.isArray(matRes?.listings) ? matRes.listings.length : 0);
     } catch (err) {
       console.error('Failed to load buyer dashboard data:', err);
@@ -47,7 +61,45 @@ export const BuyerDashboardPage: React.FC = () => {
 
   useEffect(() => {
     fetchDashboardData();
-  }, []);
+  }, [user?.id]);
+
+  // Handle undo/cancelling a pending purchase offer
+  const handleUndoOffer = async (requestId: string, title?: string) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to cancel and withdraw your purchase offer for "${title || 'this material'}"?\n\nThis will remove the offer from your dashboard and notify the seller.`
+    );
+    if (!confirmed) return;
+
+    setActionLoadingId(requestId);
+    try {
+      await api.requests.delete(requestId);
+      // Immediately remove from state to update UI and Active Purchase Offers KPI
+      setRequests((prev) => prev.filter((r) => r.id !== requestId));
+    } catch (err: any) {
+      alert(err.message || 'Failed to cancel purchase offer. Please try again.');
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  // Handle cancelling a pending order
+  const handleCancelOrder = async (orderId: string, orderNumber?: string) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to cancel pending order #${orderNumber || orderId}?`
+    );
+    if (!confirmed) return;
+
+    setActionLoadingId(orderId);
+    try {
+      await api.orders.delete(orderId);
+      // Immediately remove from state to update UI
+      setOrders((prev) => prev.filter((o) => o.id !== orderId));
+    } catch (err: any) {
+      alert(err.message || 'Failed to cancel order.');
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
 
   const pendingRequests = requests.filter(
     (r) => r.status === 'PENDING' || r.status === 'COUNTERED' || r.status === 'NEGOTIATING'
@@ -55,7 +107,8 @@ export const BuyerDashboardPage: React.FC = () => {
   const activeShipments = orders.filter(
     (o) => o.deliveryStatus === 'IN_TRANSIT' || o.deliveryStatus === 'PROCESSING'
   );
-  const totalVolumeKg = orders.reduce((sum, o) => sum + (o.quantity || 0), 1200);
+  // Real KPI calculation based strictly on user's confirmed orders (0 baseline)
+  const totalVolumeKg = orders.reduce((sum, o) => sum + (o.quantity || 0), 0);
   const estimatedSavings = Math.round(totalVolumeKg * 18.5);
 
   return (
@@ -330,30 +383,47 @@ export const BuyerDashboardPage: React.FC = () => {
                             {req.status}
                           </span>
                         </td>
-                        <td className="p-3 text-right space-x-2">
-                          {req.status === 'ACCEPTED' ? (
-                            <Link
-                              to={
-                                req.orders && req.orders[0]
-                                  ? `/checkout/${req.orders[0].id}`
-                                  : `/orders`
-                              }
-                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg font-bold text-xs bg-emerald-600 hover:bg-emerald-500 text-white"
-                            >
-                              <CreditCard className="w-3 h-3" />
-                              <span>Checkout</span>
-                            </Link>
-                          ) : (
-                            <Link
-                              to={`/messages?sellerId=${
-                                req.sellerId || req.material?.sellerId
-                              }&materialId=${req.materialId}`}
-                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-100 dark:bg-ecoDark-card hover:bg-slate-200 text-slate-700 dark:text-slate-300"
-                            >
-                              <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
-                              <span>Chat / Negotiate</span>
-                            </Link>
-                          )}
+                        <td className="p-3 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            {req.status === 'ACCEPTED' ? (
+                              <Link
+                                to={
+                                  req.orders && req.orders[0]
+                                    ? `/checkout/${req.orders[0].id}`
+                                    : `/orders`
+                                }
+                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg font-bold text-xs bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs"
+                              >
+                                <CreditCard className="w-3 h-3" />
+                                <span>Checkout</span>
+                              </Link>
+                            ) : (
+                              <>
+                                <Link
+                                  to={`/messages?sellerId=${
+                                    req.sellerId || req.material?.sellerId
+                                  }&materialId=${req.materialId}`}
+                                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-100 dark:bg-ecoDark-card hover:bg-slate-200 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-emerald-800/40"
+                                >
+                                  <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
+                                  <span>Chat / Negotiate</span>
+                                </Link>
+
+                                {req.status === 'PENDING' && (
+                                  <button
+                                    type="button"
+                                    disabled={actionLoadingId === req.id}
+                                    onClick={() => handleUndoOffer(req.id, req.material?.title)}
+                                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg font-bold text-xs bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60 transition-colors cursor-pointer disabled:opacity-50"
+                                    title="Cancel and undo this pending offer"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                    <span>{actionLoadingId === req.id ? 'Cancelling...' : 'Undo Offer'}</span>
+                                  </button>
+                                )}
+                              </>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -413,12 +483,24 @@ export const BuyerDashboardPage: React.FC = () => {
                       <span className="font-bold text-emerald-700 dark:text-emerald-400">
                         ₹{ord.totalAmount?.toLocaleString('en-IN')}
                       </span>
-                      <Link
-                        to={`/orders/${ord.id}`}
-                        className="font-bold text-[11px] text-emerald-600 dark:text-emerald-400 hover:underline"
-                      >
-                        Details & Tracking →
-                      </Link>
+                      <div className="flex items-center gap-2.5">
+                        {ord.paymentStatus === 'PENDING' && (
+                          <button
+                            type="button"
+                            disabled={actionLoadingId === ord.id}
+                            onClick={() => handleCancelOrder(ord.id, ord.orderNumber)}
+                            className="text-[11px] font-bold text-rose-600 hover:text-rose-700 hover:underline cursor-pointer disabled:opacity-50"
+                          >
+                            Cancel
+                          </button>
+                        )}
+                        <Link
+                          to={`/orders/${ord.id}`}
+                          className="font-bold text-[11px] text-emerald-600 dark:text-emerald-400 hover:underline"
+                        >
+                          Details & Tracking →
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 ))}

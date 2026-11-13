@@ -12,26 +12,40 @@ import {
   CheckCircle2,
   AlertCircle,
   FileText,
+  XCircle,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export const OrdersPage: React.FC = () => {
   const { user } = useAuth();
-  const [searchParams] = useSearchParams();
+  const isBuyer = user?.role === 'BUYER';
+  const isSeller = user?.role === 'SELLER';
+  const defaultRole = isBuyer ? 'buyer' : isSeller ? 'seller' : 'all';
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [activeTab, setActiveTab] = useState<'ALL' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED'>('ALL');
-  const [role, setRole] = useState<'all' | 'buyer' | 'seller'>('all');
+  const [role, setRole] = useState<'all' | 'buyer' | 'seller'>(defaultRole);
   const [loading, setLoading] = useState(true);
 
   const fetchOrders = async () => {
     setLoading(true);
     try {
+      const effectiveRole = isBuyer ? 'buyer' : isSeller ? 'seller' : (role === 'all' ? undefined : role);
       const res = await api.orders.getAll({
         status: activeTab === 'ALL' ? undefined : activeTab,
-        role: role === 'all' ? undefined : role,
+        role: effectiveRole,
       });
-      setOrders(res.orders);
+
+      const currentUserId = user?.id;
+      // Strict user isolation check
+      const filteredOrders = (Array.isArray(res.orders) ? res.orders : []).filter((o) => {
+        if (!currentUserId) return true;
+        if (isBuyer) return o.buyerId === currentUserId;
+        if (isSeller) return o.sellerId === currentUserId;
+        return o.buyerId === currentUserId || o.sellerId === currentUserId;
+      });
+
+      setOrders(filteredOrders);
     } catch (err) {
       console.error('Failed to load orders:', err);
     } finally {
@@ -41,7 +55,21 @@ export const OrdersPage: React.FC = () => {
 
   useEffect(() => {
     fetchOrders();
-  }, [activeTab, role]);
+  }, [activeTab, role, user?.id]);
+
+  const handleCancelOrder = async (orderId: string, orderNumber?: string) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to cancel pending order #${orderNumber || orderId}?`
+    );
+    if (!confirmed) return;
+
+    try {
+      await api.orders.delete(orderId);
+      setOrders((prev) => prev.filter((o) => o.id !== orderId));
+    } catch (err: any) {
+      alert(err.message || 'Failed to cancel order.');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#F8FAF9] dark:bg-ecoDark-bg py-8 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
@@ -202,6 +230,18 @@ export const OrdersPage: React.FC = () => {
                         <CreditCard className="w-4 h-4" />
                         <span>Pay ₹{order.totalAmount.toLocaleString('en-IN')} (Simulated)</span>
                       </Link>
+                    )}
+
+                    {/* Cancel button if buyer and pending */}
+                    {isBuyer && order.paymentStatus === 'PENDING' && order.deliveryStatus !== 'DELIVERED' && (
+                      <button
+                        type="button"
+                        onClick={() => handleCancelOrder(order.id, order.orderNumber)}
+                        className="px-5 py-2 rounded-xl font-bold text-xs bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:border-rose-800/60 dark:text-rose-300 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <XCircle className="w-4 h-4" />
+                        <span>Cancel Order</span>
+                      </button>
                     )}
 
                     <Link

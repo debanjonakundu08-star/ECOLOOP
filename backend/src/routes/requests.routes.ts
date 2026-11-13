@@ -333,3 +333,116 @@ requestsRouter.put('/:id/status', requireAuth, async (req: AuthRequest, res: Res
     res.status(500).json({ error: 'Failed to update request status.' });
   }
 });
+
+// DELETE undo / cancel pending purchase offer
+requestsRouter.delete('/:id', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const requestId = req.params.id;
+    const userId = req.user!.id;
+
+    const request = await prisma.materialRequest.findUnique({
+      where: { id: requestId },
+      include: {
+        material: true,
+        seller: true,
+        orders: true,
+      },
+    });
+
+    if (!request) {
+      res.status(404).json({ error: 'Purchase offer not found.' });
+      return;
+    }
+
+    if (request.buyerId !== userId) {
+      res.status(403).json({ error: 'Unauthorized: You can only undo your own purchase offers.' });
+      return;
+    }
+
+    if (request.status !== 'PENDING') {
+      res.status(400).json({
+        error: `Cannot undo an offer with status "${request.status}". Only PENDING offers can be cancelled.`,
+      });
+      return;
+    }
+
+    // Clean up notifications pointing to this request
+    await prisma.notification.deleteMany({
+      where: {
+        link: { contains: requestId },
+      },
+    }).catch(() => {});
+
+    // Notify seller that the offer was withdrawn
+    await prisma.notification.create({
+      data: {
+        userId: request.sellerId,
+        title: 'Offer Withdrawn by Buyer',
+        message: `${req.user!.businessName} withdrew their pending purchase offer for ${request.material.title}.`,
+        type: 'REQUEST',
+        link: '/seller/requests',
+      },
+    }).catch(() => {});
+
+    // Delete associated pending orders if any
+    if (request.orders && request.orders.length > 0) {
+      for (const ord of request.orders) {
+        if (ord.paymentStatus !== 'PAID') {
+          await prisma.order.delete({ where: { id: ord.id } }).catch(() => {});
+        }
+      }
+    }
+
+    // Delete the request record
+    await prisma.materialRequest.delete({
+      where: { id: requestId },
+    });
+
+    res.json({
+      message: 'Pending purchase offer cancelled and removed successfully.',
+      id: requestId,
+    });
+  } catch (error) {
+    console.error('Undo request error:', error);
+    res.status(500).json({ error: 'Failed to undo purchase offer.' });
+  }
+});
+
+// PUT cancel route alias
+requestsRouter.put('/:id/cancel', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const requestId = req.params.id;
+    const userId = req.user!.id;
+
+    const request = await prisma.materialRequest.findUnique({
+      where: { id: requestId },
+      include: { material: true, seller: true },
+    });
+
+    if (!request) {
+      res.status(404).json({ error: 'Purchase offer not found.' });
+      return;
+    }
+
+    if (request.buyerId !== userId) {
+      res.status(403).json({ error: 'Unauthorized: You can only cancel your own purchase offers.' });
+      return;
+    }
+
+    if (request.status !== 'PENDING') {
+      res.status(400).json({ error: 'Only pending offers can be cancelled.' });
+      return;
+    }
+
+    await prisma.materialRequest.delete({
+      where: { id: requestId },
+    });
+
+    res.json({
+      message: 'Purchase offer cancelled and removed.',
+      id: requestId,
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to cancel purchase offer.' });
+  }
+});

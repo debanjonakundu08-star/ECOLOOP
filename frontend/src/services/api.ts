@@ -432,7 +432,29 @@ function getMockFallback<T>(url: string, options: RequestInit = {}): T | null {
   };
 
   if (cleanUrl === '/orders' && method === 'GET') {
-    return { orders: [sampleOrder] } as unknown as T;
+    const currentUser = getMockUser();
+    let orders: Order[] = [];
+    try {
+      orders = JSON.parse(localStorage.getItem('ecoloop_custom_orders') || '[]');
+    } catch {}
+
+    if (currentUser) {
+      orders = orders.filter(o => currentUser.role === 'SELLER' ? o.sellerId === currentUser.id : o.buyerId === currentUser.id);
+      if (currentUser.id === MOCK_USERS[1].id) {
+        orders.push(sampleOrder);
+      }
+    }
+    return { orders } as unknown as T;
+  }
+
+  if (cleanUrl.startsWith('/orders/') && method === 'DELETE') {
+    const orderId = cleanUrl.replace('/orders/', '');
+    try {
+      const stored = JSON.parse(localStorage.getItem('ecoloop_custom_orders') || '[]');
+      const filtered = stored.filter((o: any) => o.id !== orderId);
+      localStorage.setItem('ecoloop_custom_orders', JSON.stringify(filtered));
+    } catch {}
+    return { message: 'Order removed successfully.', id: orderId } as unknown as T;
   }
 
   if (cleanUrl.startsWith('/orders/') && method === 'GET') {
@@ -459,6 +481,16 @@ function getMockFallback<T>(url: string, options: RequestInit = {}): T | null {
       order: { ...sampleOrder, paymentStatus: 'PAID' },
       impactRecord: { quantityKg: 1200, co2SavedKg: 1800, waterSavedLiters: 45000 },
     } as unknown as T;
+  }
+
+  if (cleanUrl.startsWith('/requests/') && method === 'DELETE') {
+    const reqId = cleanUrl.replace('/requests/', '');
+    try {
+      const stored = JSON.parse(localStorage.getItem('ecoloop_buyer_requests') || '[]');
+      const filtered = stored.filter((r: any) => r.id !== reqId);
+      localStorage.setItem('ecoloop_buyer_requests', JSON.stringify(filtered));
+    } catch {}
+    return { message: 'Purchase offer cancelled and removed.', id: reqId } as unknown as T;
   }
 
   if (cleanUrl === '/requests' && method === 'POST') {
@@ -492,10 +524,16 @@ function getMockFallback<T>(url: string, options: RequestInit = {}): T | null {
   }
 
   if (cleanUrl === '/requests/buyer' && method === 'GET') {
+    const currentUser = getMockUser();
     let custom: MaterialRequest[] = [];
     try {
       custom = JSON.parse(localStorage.getItem('ecoloop_buyer_requests') || '[]');
     } catch {}
+
+    // Strictly filter custom requests by current logged in user ID
+    let userRequests = currentUser
+      ? custom.filter((r) => r.buyerId === currentUser.id)
+      : [];
 
     const defaultBuyerRequests: MaterialRequest[] = [
       {
@@ -551,12 +589,28 @@ function getMockFallback<T>(url: string, options: RequestInit = {}): T | null {
       },
     ];
 
-    return { requests: [...custom, ...defaultBuyerRequests] } as unknown as T;
+    // Only include demo requests for the specific demo account
+    if (currentUser?.id === MOCK_USERS[1].id) {
+      userRequests = [...userRequests, ...defaultBuyerRequests];
+    }
+
+    return { requests: userRequests } as unknown as T;
   }
 
   if (cleanUrl === '/requests/seller' && method === 'GET') {
-    return {
-      requests: [
+    const currentUser = getMockUser();
+    let custom: MaterialRequest[] = [];
+    try {
+      custom = JSON.parse(localStorage.getItem('ecoloop_buyer_requests') || '[]');
+    } catch {}
+
+    let sellerRequests = currentUser
+      ? custom.filter((r) => r.sellerId === currentUser.id)
+      : [];
+
+    if (currentUser?.id === MOCK_USERS[0].id) {
+      sellerRequests = [
+        ...sellerRequests,
         {
           id: 'req-seller-demo-1',
           materialId: allListings[0]?.id || 'mat-1',
@@ -573,8 +627,9 @@ function getMockFallback<T>(url: string, options: RequestInit = {}): T | null {
           seller: MOCK_USERS[0],
           material: allListings[0],
         },
-      ]
-    } as unknown as T;
+      ];
+    }
+    return { requests: sellerRequests } as unknown as T;
   }
 
   if (cleanUrl === '/messages/conversations') {
@@ -846,6 +901,8 @@ export const api = {
         method: 'PUT',
         body: JSON.stringify(body),
       }),
+    delete: (id: string) => fetchJson<{ message: string; id: string }>(`/requests/${id}`, { method: 'DELETE' }),
+    cancel: (id: string) => fetchJson<{ message: string; id: string }>(`/requests/${id}/cancel`, { method: 'PUT' }),
   },
 
   messages: {
@@ -872,6 +929,8 @@ export const api = {
         method: 'PUT',
         body: JSON.stringify(body),
       }),
+    delete: (id: string) => fetchJson<{ message: string; id: string }>(`/orders/${id}`, { method: 'DELETE' }),
+    cancel: (id: string) => fetchJson<{ message: string; order: Order }>(`/orders/${id}/cancel`, { method: 'PUT' }),
   },
 
   checkout: {

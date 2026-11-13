@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { MaterialRequest } from '../types';
+import { useAuth } from '../context/AuthContext';
 import {
   Scale,
   CheckCircle2,
@@ -21,6 +22,7 @@ import { motion } from 'framer-motion';
 
 export const SellerRequestsPage: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [requests, setRequests] = useState<MaterialRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'ALL' | 'PENDING' | 'ACCEPTED' | 'NEGOTIATING' | 'DECLINED'>('ALL');
@@ -37,7 +39,12 @@ export const SellerRequestsPage: React.FC = () => {
   const fetchRequests = async () => {
     try {
       const res = await api.requests.getSellerRequests();
-      setRequests(res.requests);
+      const currentUserId = user?.id;
+      const list = (Array.isArray(res.requests) ? res.requests : []).filter((r: any) => {
+        if (!currentUserId) return true;
+        return !r.sellerId || r.sellerId === currentUserId;
+      });
+      setRequests(list);
     } catch (err) {
       console.error('Failed to fetch requests:', err);
     } finally {
@@ -47,7 +54,7 @@ export const SellerRequestsPage: React.FC = () => {
 
   useEffect(() => {
     fetchRequests();
-  }, []);
+  }, [user?.id]);
 
   const handleAction = async (requestId: string, status: 'ACCEPTED' | 'DECLINED') => {
     try {

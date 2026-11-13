@@ -10,17 +10,19 @@ ordersRouter.get('/', requireAuth, async (req: AuthRequest, res: Response): Prom
     const userId = req.user!.id;
     const { status, role } = req.query; // status: "ALL", "ACTIVE", "COMPLETED", "CANCELLED"
 
-    let where: any = {
-      OR: [
+    const isBuyer = req.user!.role === 'BUYER';
+    const isSeller = req.user!.role === 'SELLER';
+
+    let where: any = {};
+    if (isBuyer || role === 'buyer') {
+      where.buyerId = userId;
+    } else if (isSeller || role === 'seller') {
+      where.sellerId = userId;
+    } else {
+      where.OR = [
         { buyerId: userId },
         { sellerId: userId },
-      ],
-    };
-
-    if (role === 'buyer') {
-      where = { buyerId: userId };
-    } else if (role === 'seller') {
-      where = { sellerId: userId };
+      ];
     }
 
     if (status === 'ACTIVE') {
@@ -158,5 +160,78 @@ ordersRouter.put('/:id/delivery-status', requireAuth, async (req: AuthRequest, r
     res.json({ message: 'Delivery status updated successfully.', order: updated });
   } catch (error) {
     res.status(500).json({ error: 'Failed to update order status.' });
+  }
+});
+
+// DELETE or CANCEL pending/unpaid order
+ordersRouter.delete('/:id', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const orderId = req.params.id;
+    const userId = req.user!.id;
+
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+    });
+
+    if (!order) {
+      res.status(404).json({ error: 'Order not found.' });
+      return;
+    }
+
+    if (order.buyerId !== userId && order.sellerId !== userId) {
+      res.status(403).json({ error: 'Unauthorized to delete this order.' });
+      return;
+    }
+
+    if (order.paymentStatus === 'PAID') {
+      res.status(400).json({ error: 'Paid orders cannot be deleted. Please contact dispute support.' });
+      return;
+    }
+
+    await prisma.order.delete({
+      where: { id: orderId },
+    });
+
+    res.json({ message: 'Pending order removed successfully.', id: orderId });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete order.' });
+  }
+});
+
+// PUT cancel order
+ordersRouter.put('/:id/cancel', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const orderId = req.params.id;
+    const userId = req.user!.id;
+
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+    });
+
+    if (!order) {
+      res.status(404).json({ error: 'Order not found.' });
+      return;
+    }
+
+    if (order.buyerId !== userId && order.sellerId !== userId) {
+      res.status(403).json({ error: 'Unauthorized to cancel this order.' });
+      return;
+    }
+
+    if (order.paymentStatus === 'PAID') {
+      res.status(400).json({ error: 'Paid orders cannot be cancelled directly.' });
+      return;
+    }
+
+    const updated = await prisma.order.update({
+      where: { id: orderId },
+      data: {
+        deliveryStatus: 'CANCELLED',
+      },
+    });
+
+    res.json({ message: 'Order cancelled successfully.', order: updated });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to cancel order.' });
   }
 });
