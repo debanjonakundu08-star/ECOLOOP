@@ -15,8 +15,9 @@ export const CATEGORY_IMAGES: Record<string, string> = {
   'Furniture': '/images/cat-furniture.jpg',
   'Business equipment': '/images/cat-business-equipment.jpg',
 };
-
 const TITLE_KEYWORD_IMAGES: Array<{ pattern: RegExp; image: string }> = [
+  { pattern: /\b(stretch\s*film|bubble\s*wrap|shrink\s*wrap|packing\s*rolls?)\b/i, image: '/images/cat-stretch-film.jpg' },
+  { pattern: /\b(drums?|carboys?|barrels?|210l)\b/i, image: '/images/cat-plastic-drums.jpg' },
   { pattern: /\b(sawdust|wood\s*chips?|shavings?|wood\s*powder|bark|mulch)\b/i, image: '/images/cat-sawdust.jpg' },
   { pattern: /\b(cardboard|corrugated|kraft|carton|paper)\b/i, image: CATEGORY_IMAGES['Paper/Cardboard'] },
   { pattern: /\b(plastic|hdpe|ldpe|pet|pvc|polyethylene|polymer|granule|regrind)\b/i, image: CATEGORY_IMAGES['Plastic'] },
@@ -26,7 +27,7 @@ const TITLE_KEYWORD_IMAGES: Array<{ pattern: RegExp; image: string }> = [
   { pattern: /\b(glass|bottle|amber|cullet)\b/i, image: CATEGORY_IMAGES['Glass'] },
   { pattern: /\b(textile|fabric|cotton|garment|cloth|clipping|selvedge)\b/i, image: CATEGORY_IMAGES['Textile'] },
   { pattern: /\b(food|organic|compost|biomass|peel|vegetable)\b/i, image: CATEGORY_IMAGES['Food waste'] },
-  { pattern: /\b(packaging|wrap|stretch film|box)\b/i, image: CATEGORY_IMAGES['Packaging materials'] },
+  { pattern: /\b(packaging|wrap|box)\b/i, image: CATEGORY_IMAGES['Packaging materials'] },
   { pattern: /\b(brick|concrete|tile|construction|cement)\b/i, image: CATEGORY_IMAGES['Construction materials'] },
   { pattern: /\b(furniture|desk|chair|office)\b/i, image: CATEGORY_IMAGES['Furniture'] },
   { pattern: /\b(equipment|machinery|rack|worktable)\b/i, image: CATEGORY_IMAGES['Business equipment'] },
@@ -86,6 +87,20 @@ export function getListingPrimaryImage(listing: Partial<MaterialListing> & { ima
   if (listing?.title && /\b(sawdust|wood\s*chips?|shavings?)\b/i.test(listing.title)) {
     if (!candidate || isLegacyStockUrl(candidate) || candidate === '/images/cat-wood.jpg') {
       return '/images/cat-sawdust.jpg';
+    }
+  }
+
+  // If item is specifically stretch film / bubble wrap
+  if (listing?.title && /\b(stretch\s*film|bubble\s*wrap|shrink\s*wrap)\b/i.test(listing.title)) {
+    if (!candidate || isLegacyStockUrl(candidate) || candidate === '/images/cat-packaging.jpg') {
+      return '/images/cat-stretch-film.jpg';
+    }
+  }
+
+  // If item is specifically plastic drums / carboys / barrels
+  if (listing?.title && /\b(drums?|carboys?|barrels?|210l)\b/i.test(listing.title)) {
+    if (!candidate || isLegacyStockUrl(candidate) || candidate === '/images/cat-packaging.jpg') {
+      return '/images/cat-plastic-drums.jpg';
     }
   }
 

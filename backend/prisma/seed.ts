@@ -296,7 +296,7 @@ async function main() {
       locationAddress: 'Howrah Freight Terminal, Howrah',
       availability: 'Immediate',
       minOrderQuantity: 10,
-      imageUrl: '/images/cat-packaging.jpg',
+      imageUrl: '/images/cat-plastic-drums.jpg',
     },
     {
       sellerId: assamBioUser.id,
@@ -401,7 +401,7 @@ async function main() {
       locationAddress: 'Salt Lake Sector V, Kolkata',
       availability: 'Immediate',
       minOrderQuantity: 50,
-      imageUrl: '/images/cat-packaging.jpg',
+      imageUrl: '/images/cat-stretch-film.jpg',
     },
     {
       sellerId: assamBioUser.id,
