@@ -62,7 +62,7 @@ export const LoginPage: React.FC = () => {
     try {
       const loggedUser = await login(email, password, selectedRole);
       const destination = (loggedUser.role || selectedRole) === 'SELLER'
-        ? '/seller/dashboard'
+        ? '/seller/listings'
         : '/buyer/marketplace';
       navigate(destination, { replace: true });
     } catch (err: any) {

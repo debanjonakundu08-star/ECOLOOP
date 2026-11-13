@@ -141,7 +141,7 @@ export const App: React.FC = () => {
                         </RoleRoute>
                       }
                     />
-                    <Route path="/seller" element={<Navigate to="/seller/dashboard" replace />} />
+                    <Route path="/seller" element={<Navigate to="/seller/listings" replace />} />
 
                     {/* Redirects & Legacy paths */}
                     <Route path="/list-waste" element={<Navigate to="/seller/list-waste" replace />} />

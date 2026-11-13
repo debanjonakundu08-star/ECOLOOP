@@ -22,7 +22,7 @@ export const RootGateway: React.FC = () => {
 
   if (user) {
     if (user.role === 'SELLER') {
-      return <Navigate to="/seller/dashboard" replace />;
+      return <Navigate to="/seller/listings" replace />;
     }
     return <Navigate to="/buyer/marketplace" replace />;
   }

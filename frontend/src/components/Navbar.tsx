@@ -130,7 +130,7 @@ export const Navbar: React.FC = () => {
         <div className="flex items-center justify-between h-20 gap-2 sm:gap-4">
           {/* Logo & Tagline */}
           <Link
-            to={isSeller ? '/seller/dashboard' : isBuyer ? '/buyer/marketplace' : '/'}
+            to={isSeller ? '/seller/listings' : isBuyer ? '/buyer/marketplace' : '/'}
             className="flex items-center gap-3 group shrink-0"
           >
             <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-emerald-800 to-emerald-500 dark:from-emerald-600 dark:to-teal-400 flex items-center justify-center text-white shadow-md shadow-emerald-900/20 dark:shadow-emerald-500/20 group-hover:scale-105 transition-all duration-300">
